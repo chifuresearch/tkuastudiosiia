@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 // src/components/ProjectGrid.tsx
 import { X, ExternalLink, Hash, User, Calendar, Briefcase } from 'lucide-react'; // 加上 Briefcase
 
-interface Project {
+interface ProjectData {
   date_year: number;
   name: string;
   name_tw: string;
@@ -17,19 +17,25 @@ interface Project {
   img_path: string;
 }
 
-export default function ProjectGrid() {
+interface ProjectDataProps {
+  projects: ProjectData[]; // 接收從 App.tsx 傳來的資料
+}
+
+export default function ProjectGrid({ projects }: ProjectDataProps) {
   const { i18n } = useTranslation();
-  const [projects, setProjects] = useState<Project[]>([]);
+  // const [projects, setProjects] = useState<Project[]>([]);
   const [filter, setFilter] = useState<string>('all');
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [selectedProject, setSelectedProject] = useState<ProjectData | null>(null);
   const isZh = i18n.language === 'zh';
 
-  useEffect(() => {
-    fetch('/data.json')
-      .then(res => res.json())
-      .then(payload => setProjects(payload.data.approaches))
-      .catch(err => console.error("Project 資料載入失敗:", err));
-  }, []);
+
+
+  // useEffect(() => {
+  //   fetch('/data.json')
+  //     .then(res => res.json())
+  //     .then(payload => setProjects(payload.data.approaches))
+  //     .catch(err => console.error("Project 資料載入失敗:", err));
+  // }, []);
 
   // 動態提取所有不重複的標籤
   const allTags = useMemo(() => {
@@ -43,6 +49,13 @@ export default function ProjectGrid() {
     if (filter === 'all') return projects;
     return projects.filter(p => p.tags.includes(filter));
   }, [projects, filter]);
+
+  if (!projects || projects.length === 0) return null;
+
+// 如果資料還沒載入，顯示一個簡單的 Loading 或回傳 null
+  if (!projects || projects.length === 0) {
+    return <div className="text-white text-center py-20 font-mono animate-pulse">LOADING_DATA...</div>;
+  }
 
   return (
     <section className="w-full py-20 px-8">

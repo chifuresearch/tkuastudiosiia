@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import 'swiper/css';
 import 'swiper/css/free-mode';
 
-interface GalleryItem {
+interface GalleryData {
   name: string;
   name_tw: string;
   gallery_title: string;
@@ -15,19 +15,28 @@ interface GalleryItem {
   img_path: string; // 來自 JSON 的資料夾路徑
 }
 
-export default function GalleryCarousel() {
+interface GalleryDataProps {
+  gallery: GalleryData[]; // 接收從 App.tsx 傳來的資料
+}
+
+export default function GalleryCarousel({ gallery }: GalleryDataProps) {
   const { i18n } = useTranslation();
-  const [galleryData, setGalleryData] = useState<GalleryItem[]>([]);
+  // const [galleryData, setGalleryData] = useState<GalleryData[]>([]);
 
-  useEffect(() => {
-    fetch('/data.json')
-      .then(res => res.json())
-      .then(payload => {
-        // 取得 JSON 中的 gallery 資料
-        setGalleryData(payload.data.gallery);
-      });
-  }, []);
+  // useEffect(() => {
+  //   fetch('/data.json')
+  //     .then(res => res.json())
+  //     .then(payload => {
+  //       // 取得 JSON 中的 gallery 資料
+  //       setGalleryData(payload.data.gallery);
+  //     });
+  // }, []);
+  if (!gallery || gallery.length === 0) return null;
 
+// 如果資料還沒載入，顯示一個簡單的 Loading 或回傳 null
+  if (!gallery || gallery.length === 0) {
+    return <div className="text-white text-center py-20 font-mono animate-pulse">LOADING_DATA...</div>;
+  }
   return (
     <div className="w-full py-20 bg-black/10 backdrop-blur-sm">
       <Swiper
@@ -47,7 +56,7 @@ export default function GalleryCarousel() {
         }}
         className="gallery-continuous-swiper"
       >
-        {galleryData.map((item, index) => (
+        {gallery.map((item, index) => (
           <SwiperSlide key={index}>
             <div className="group relative aspect-square overflow-hidden border border-white/10 hover:border-blue-500 transition-all duration-500">
               

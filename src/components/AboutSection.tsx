@@ -21,36 +21,46 @@ interface AboutData {
   content_2_tw: string[];
 }
 
-export default function AboutSection() {
+interface AboutDataProps {
+  abouts: AboutData | null; // 接收從 App.tsx 傳來的資料
+}
+
+export default function AboutSection({ abouts }: AboutDataProps) {
   const { i18n } = useTranslation();
-  const [data, setData] = useState<AboutData | null>(null);
+  // const [data, setData] = useState<AboutData | null>(null);
   const [activeTab, setActiveTab] = useState(0);
   const isZh = i18n.language === 'zh';
 
-  useEffect(() => {
-    fetch('/data.json')
-      .then(res => res.json())
-      .then(payload => setData(payload.data.info.sections[1])) // 串接 sections[1]
-      .catch(err => console.error("About 數據加載失敗:", err));
-  }, []);
+  // useEffect(() => {
+  //   fetch('/data.json')
+  //     .then(res => res.json())
+  //     .then(payload => setData(payload.data.info.sections[1])) // 串接 sections[1]
+  //     .catch(err => console.error("About 數據加載失敗:", err));
+  // }, []);
 
-  if (!data) return null;
+  if (!abouts ) return null;
+
+// 如果資料還沒載入，顯示一個簡單的 Loading 或回傳 null
+  if (!abouts ) {
+    return <div className="text-white text-center py-20 font-mono animate-pulse">LOADING_DATA...</div>;
+  }
+  
 
   // 定義內容索引
   const tabs = [
     { 
-      label: isZh ? data.content_a_tw[0] : data.content_a[0], 
-      text: isZh ? data.content_a_tw[1] : data.content_a[1],
+      label: isZh ? abouts.content_a_tw[0] : abouts.content_a[0], 
+      text: isZh ? abouts.content_a_tw[1] : abouts.content_a[1],
       icon: <Info size={16} />
     },
     { 
-      label: isZh ? data.content_b_tw[0] : data.content_b[0], 
-      text: isZh ? data.content_b_tw[1] : data.content_b[1],
+      label: isZh ? abouts.content_b_tw[0] : abouts.content_b[0], 
+      text: isZh ? abouts.content_b_tw[1] : abouts.content_b[1],
       icon: <Target size={16} />
     },
     { 
-      label: isZh ? data.content_c_tw[0] : data.content_c[0], 
-      text: isZh ? data.content_c_tw[1] : data.content_c[1],
+      label: isZh ? abouts.content_c_tw[0] : abouts.content_c[0], 
+      text: isZh ? abouts.content_c_tw[1] : abouts.content_c[1],
       icon: <Cpu size={16} />
     }
   ];
@@ -64,11 +74,11 @@ export default function AboutSection() {
           <div className="lg:col-span-6 space-y-8">
             <div className="space-y-2">
               <h4 className="text-blue-500 font-mono text-[10px] tracking-[0.4em] uppercase opacity-70">
-                / {isZh ? data.subtitle_tw : data.subtitle}
+                / {isZh ? abouts.subtitle_tw : abouts.subtitle}
               </h4>
               <h2 
                 className="text-4xl md:text-6xl font-black text-white tracking-tighter uppercase leading-[0.9]"
-                dangerouslySetInnerHTML={{ __html: isZh ? data.title_tw : data.title }}
+                dangerouslySetInnerHTML={{ __html: isZh ? abouts.title_tw : abouts.title }}
               />
             </div>
 
@@ -127,16 +137,16 @@ export default function AboutSection() {
           <div className="lg:col-span-7 order-1 lg:order-2 space-y-10">
             <div className="space-y-4">
               <h3 className="text-blue-500 font-mono text-[10px] tracking-[0.4em] uppercase">
-                / {isZh ? data.subtitle_2_tw : data.subtitle_2}
+                / {isZh ? abouts.subtitle_2_tw : abouts.subtitle_2}
               </h3>
               <h2 
                 className="text-3xl md:text-5xl font-black text-white tracking-tighter uppercase leading-[1.1]"
-                dangerouslySetInnerHTML={{ __html: isZh ? data.title_2_tw : data.title_2 }}
+                dangerouslySetInnerHTML={{ __html: isZh ? abouts.title_2_tw : abouts.title_2 }}
               />
             </div>
 
             <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {(isZh ? data.content_2_tw : data.content_2).map((item, idx) => (
+              {(isZh ? abouts.content_2_tw : abouts.content_2).map((item, idx) => (
                 <li key={idx} className="flex gap-4 p-4 bg-white/5 border border-white/5 rounded-lg hover:border-blue-500/30 transition-all group">
                   <ChevronRight size={14} className="text-blue-500 mt-1 shrink-0 group-hover:translate-x-1 transition-transform" />
                   <p className="text-gray-400 text-xs leading-relaxed group-hover:text-gray-200 transition-colors">

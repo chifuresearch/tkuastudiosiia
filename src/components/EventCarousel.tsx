@@ -14,33 +14,18 @@ interface EventData {
   img_path: string;
 }
 
-export default function EventCarousel() {
+interface EventCarouselProps {
+  events: EventData[]; // 接收從 App.tsx 傳來的資料
+}
+
+export default function EventCarousel({ events }: EventCarouselProps) {
   const { i18n } = useTranslation();
-  const [events, setEvents] = useState<EventData[]>([]);
+  if (!events || events.length === 0) return null;
 
-  useEffect(() => {
-    // 1. 建立 AbortController 以避免組件卸載時的連線衝突
-    const controller = new AbortController();
-    const signal = controller.signal;
-
-    fetch('/data.json', { signal })
-      .then((res) => res.json())
-      .then((payload) => {
-        setEvents(payload.data.events);
-      })
-      .catch((err) => {
-        if (err.name === 'AbortError') {
-          console.log('Fetch aborted to prevent conflict');
-        } else {
-          console.error("抓取 Event 資料失敗:", err);
-        }
-      });
-
-    // 清理函數：當組件重新渲染或卸載時中止請求
-    return () => controller.abort();
-  }, []);
-
-  if (events.length === 0) return <div className="text-white text-center py-20 font-mono animate-pulse">LOADING_DATA...</div>;
+// 如果資料還沒載入，顯示一個簡單的 Loading 或回傳 null
+  if (!events || events.length === 0) {
+    return <div className="text-white text-center py-20 font-mono animate-pulse">LOADING_DATA...</div>;
+  }
 
   return (
     <div className="w-full py-10 select-none">

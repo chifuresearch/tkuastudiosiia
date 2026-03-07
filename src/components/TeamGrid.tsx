@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, User, Briefcase, FileText } from 'lucide-react'; // 推薦安裝 lucide-react
 
-interface Advisor {
+interface AdvisorData {
   type: number;
   name: string;
   name_tw: string;
@@ -13,19 +13,22 @@ interface Advisor {
   descript_tw: string;
 }
 
-export default function TeamGrid() {
+interface TeamGridProps {
+  advisors: AdvisorData[]; // 接收從 App.tsx 傳來的資料
+}
+
+export default function TeamGrid({ advisors }: TeamGridProps) {
   const { i18n } = useTranslation();
-  const [advisors, setAdvisors] = useState<Advisor[]>([]);
-  const [selectedMember, setSelectedMember] = useState<Advisor | null>(null);
+  const [selectedMember, setSelectedMember] = useState<AdvisorData | null>(null);
   const isZh = i18n.language === 'zh';
+  
+  if (!advisors || advisors.length === 0) return null;
 
-  useEffect(() => {
-    fetch('/data.json')
-      .then(res => res.json())
-      .then(payload => setAdvisors(payload.data.advisors))
-      .catch(err => console.error("載入導師資料失敗:", err));
-  }, []);
-
+// 如果資料還沒載入，顯示一個簡單的 Loading 或回傳 null
+  if (!advisors || advisors.length === 0) {
+    return <div className="text-white text-center py-20 font-mono animate-pulse">LOADING_DATA...</div>;
+  }
+  
   return (
     <div className="w-full py-12 px-8 lg:px-16">
         {/* 1. 增加網格間距：從 gap-px 改為 gap-8 或 gap-12 */}
