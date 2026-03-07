@@ -71,19 +71,20 @@ class SiteManagerGUI:
             messagebox.showerror("錯誤", f"更新失敗: {e}")
 
     def deploy_git(self):
-        """執行 Git 上傳並觸發 GitHub Actions"""
         def run():
             try:
-                self.status.config(text="正在推送至 GitHub...", fg="#3b82f6")
-                # 依序執行 git 指令
+                self.status.config(text="同步並上傳中...", fg="#3b82f6")
+                # 先嘗試 pull，避免遠端有更新
+                subprocess.run(["git", "pull", "origin", "main", "--rebase"], shell=True)
+                
                 subprocess.run(["git", "add", "."], check=True, shell=True)
                 subprocess.run(["git", "commit", "-m", "Update site via Python GUI"], check=True, shell=True)
                 subprocess.run(["git", "push", "origin", "main"], check=True, shell=True)
                 
-                self.status.config(text="上傳成功！等待 GitHub Actions 部署...", fg="#22c55e")
-                messagebox.showinfo("成功", "已推送到 GitHub，網站將在幾分鐘後自動更新。")
+                self.status.config(text="上傳成功！", fg="#22c55e")
+                messagebox.showinfo("成功", "已同步並推送到 GitHub。")
             except Exception as e:
-                messagebox.showerror("錯誤", f"Git 操作失敗，請確保已設定遠端倉庫:\n{e}")
+                messagebox.showerror("錯誤", f"操作失敗:\n{e}")
 
         threading.Thread(target=run).start()
 
