@@ -110,7 +110,7 @@ class SiteManagerGUI:
         threading.Thread(target=run).start()
 
     def select_and_upload_glb(self):
-            """方案 1：徹底移除 LFS 並強制以實體二進位上傳 (限 100MB 內)"""
+            """方案 1：徹底移除 LFS 並『強制』覆蓋雲端 (解決 rejected 錯誤)"""
             file_path = filedialog.askopenfilename(
                 title="選取實體 GLB (請確認小於 100MB)",
                 filetypes=[("GLB files", "*.glb")]
@@ -125,35 +125,34 @@ class SiteManagerGUI:
                     rel_model_path = "public/models/sitecam.glb"
                     target_path = os.path.join(base_path, rel_model_path)
 
-                    # 1. 徹底解除 LFS 追蹤
+                    # 1. 移除 LFS 追蹤
                     subprocess.run('git lfs untrack "public/models/*.glb"', shell=True)
                     
-                    # 2. 強制從 Git 索引中移除該檔案 (確保指標檔消失)
+                    # 2. 強制移除指標紀錄並處理屬性檔
                     subprocess.run(f'git rm --cached "{rel_model_path}"', shell=True)
-                    
-                    # 3. 處理 .gitattributes (如果存在就刪除)
                     if os.path.exists(".gitattributes"):
                         os.remove(".gitattributes")
                     
-                    # 4. 複製實體檔案
+                    # 3. 複製實體檔案
                     os.makedirs(os.path.dirname(target_path), exist_ok=True)
                     shutil.copy2(file_path, target_path)
 
-                    self.status.config(text="📦 正在強制暫存並提交實體檔...", fg="#3b82f6")
+                    self.status.config(text="🚀 正在強制覆蓋雲端數據...", fg="#3b82f6")
 
-                    # 5. 關鍵：執行 git add . 確保所有變更(包含刪除 .gitattributes)都被紀錄
+                    # 4. 加入所有變更
                     subprocess.run("git add .", check=True, shell=True)
-                    subprocess.run(f'git add -f "{rel_model_path}"', check=True, shell=True)
+                    subprocess.run(f'git add -f "{target_path}"', check=True, shell=True)
                     
-                    # 6. 使用 --allow-empty 確保 Commit 一定會成功
-                    commit_msg = f"fix: complete lfs removal and direct glb upload {time.strftime('%H:%M:%S')}"
+                    # 5. 提交
+                    commit_msg = f"fix: force upload binary glb {time.strftime('%H:%M:%S')}"
                     subprocess.run(f'git commit --allow-empty -m "{commit_msg}"', check=True, shell=True)
                     
-                    # 7. 推送至 GitHub
-                    subprocess.run("git push origin main", check=True, shell=True)
+                    # 6. 核心修正：使用 --force 強制推送到 GitHub
+                    # 這會直接蓋掉雲端那些錯誤的 LFS 指標紀錄
+                    subprocess.run("git push origin main --force", check=True, shell=True)
 
-                    self.status.config(text="✅ 實體模型已直接上傳！", fg="#22c55e")
-                    messagebox.showinfo("成功", "LFS 已徹底移除，實體模型已上傳。")
+                    self.status.config(text="✅ 實體模型已強制上傳成功！", fg="#22c55e")
+                    messagebox.showinfo("成功", "已強制覆蓋雲端紀錄，實體模型已上傳。")
 
                 except Exception as e:
                     self.status.config(text="上傳失敗", fg="#ef4444")
