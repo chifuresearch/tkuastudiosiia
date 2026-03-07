@@ -110,55 +110,56 @@ class SiteManagerGUI:
         threading.Thread(target=run).start()
 
     def select_and_upload_glb(self):
-        """激進修復：先刪除遠端紀錄，再重新上傳實體 GLB"""
-        file_path = filedialog.askopenfilename(
-            title="選取要上傳的實體 GLB 檔案",
-            filetypes=[("GLB files", "*.glb")]
-        )
-        if not file_path: return
+            """方案 1：徹底移除 LFS 並強制以實體二進位上傳 (限 100MB 內)"""
+            file_path = filedialog.askopenfilename(
+                title="選取實體 GLB (請確認小於 100MB)",
+                filetypes=[("GLB files", "*.glb")]
+            )
+            if not file_path: return
 
-        def run():
-            try:
-                self.status.config(text="🔥 正在執行激進刪除與重建...", fg="#ef4444")
-                
-                base_path = os.path.dirname(os.path.abspath(__file__))
-                # 使用相對於專案根目錄的 Git 路徑
-                rel_model_path = "public/models/sitecam.glb"
-                target_path = os.path.join(base_path, rel_model_path)
+            def run():
+                try:
+                    self.status.config(text="🚫 正在移除 LFS 紀錄...", fg="#facc15")
+                    
+                    base_path = os.path.dirname(os.path.abspath(__file__))
+                    rel_model_path = "public/models/sitecam.glb"
+                    target_path = os.path.join(base_path, rel_model_path)
 
-                # --- 第一階段：從 Git 歷史中徹底抹除該檔案 ---
-                # 強制從 Git 暫存與本地刪除
-                subprocess.run(f'git rm -f "{rel_model_path}"', shell=True)
-                subprocess.run('git commit -m "chore: purge corrupted lfs pointer"', shell=True)
-                # 先推一次，讓 GitHub 遠端也變成「檔案已刪除」狀態
-                subprocess.run("git push origin main", shell=True)
+                    # 1. 徹底解除 LFS 追蹤
+                    subprocess.run('git lfs untrack "public/models/*.glb"', shell=True)
+                    
+                    # 2. 強制從 Git 索引中移除該檔案 (確保指標檔消失)
+                    subprocess.run(f'git rm --cached "{rel_model_path}"', shell=True)
+                    
+                    # 3. 處理 .gitattributes (如果存在就刪除)
+                    if os.path.exists(".gitattributes"):
+                        os.remove(".gitattributes")
+                    
+                    # 4. 複製實體檔案
+                    os.makedirs(os.path.dirname(target_path), exist_ok=True)
+                    shutil.copy2(file_path, target_path)
 
-                # --- 第二階段：重新置入實體檔案並上傳 ---
-                self.status.config(text="📦 正在重新注入實體模型...", fg="#3b82f6")
-                os.makedirs(os.path.dirname(target_path), exist_ok=True)
-                shutil.copy2(file_path, target_path)
+                    self.status.config(text="📦 正在強制暫存並提交實體檔...", fg="#3b82f6")
 
-                # 強制重新執行 LFS 追蹤
-                subprocess.run("git lfs install", check=True, shell=True)
-                subprocess.run(f'git lfs track "{rel_model_path}"', check=True, shell=True)
-                subprocess.run("git add .gitattributes", check=True, shell=True)
-                
-                # 強制加入實體檔並推送
-                subprocess.run(f'git add "{rel_model_path}"', check=True, shell=True)
-                subprocess.run('git commit -m "feat: reset and upload real binary glb"', check=True, shell=True)
-                
-                # 執行二進位數據傳輸
-                subprocess.run("git lfs push origin main --all", check=True, shell=True)
-                subprocess.run("git push origin main", check=True, shell=True)
+                    # 5. 關鍵：執行 git add . 確保所有變更(包含刪除 .gitattributes)都被紀錄
+                    subprocess.run("git add .", check=True, shell=True)
+                    subprocess.run(f'git add -f "{rel_model_path}"', check=True, shell=True)
+                    
+                    # 6. 使用 --allow-empty 確保 Commit 一定會成功
+                    commit_msg = f"fix: complete lfs removal and direct glb upload {time.strftime('%H:%M:%S')}"
+                    subprocess.run(f'git commit --allow-empty -m "{commit_msg}"', check=True, shell=True)
+                    
+                    # 7. 推送至 GitHub
+                    subprocess.run("git push origin main", check=True, shell=True)
 
-                self.status.config(text="✅ 激進上傳成功！", fg="#22c55e")
-                messagebox.showinfo("成功", "已清空遠端錯誤指標並重新上傳實體模型。")
+                    self.status.config(text="✅ 實體模型已直接上傳！", fg="#22c55e")
+                    messagebox.showinfo("成功", "LFS 已徹底移除，實體模型已上傳。")
 
-            except Exception as e:
-                self.status.config(text="修復中斷", fg="#ef4444")
-                messagebox.showerror("錯誤", f"激進修復失敗:\n{e}")
+                except Exception as e:
+                    self.status.config(text="上傳失敗", fg="#ef4444")
+                    messagebox.showerror("錯誤", f"指令執行失敗:\n{e}")
 
-        threading.Thread(target=run).start()
+            threading.Thread(target=run).start()
 
 if __name__ == "__main__":
     root = tk.Tk()

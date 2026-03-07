@@ -1,2 +1,0 @@
-public/models/*.glb filter=lfs diff=lfs merge=lfs -text
-public/models/sitecam.glb filter=lfs diff=lfs merge=lfs -text
