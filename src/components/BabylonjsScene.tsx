@@ -141,8 +141,10 @@ export default function BabylonjsScene() {
 
     // 關鍵修正 3：使用路徑與檔名分離的載入方式
     console.log("PC_LOG: Attempting to load sitecam.glb...");
-    
-    BABYLON.SceneLoader.ImportMeshAsync("", "/models/", "sitecam.glb", scene)
+
+    const modelPath = `${import.meta.env.BASE_URL}models/`;
+
+    BABYLON.SceneLoader.ImportMeshAsync("", modelPath, "sitecam.glb", scene)
       .then((result) => {
         console.log("PC_LOG: GLB Load Success. Meshes:", result.meshes.length);
         
