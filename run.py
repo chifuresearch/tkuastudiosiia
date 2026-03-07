@@ -71,20 +71,30 @@ class SiteManagerGUI:
             messagebox.showerror("錯誤", f"更新失敗: {e}")
 
     def deploy_git(self):
+        """執行 Git 強制上傳並觸發 GitHub Actions"""
         def run():
             try:
-                self.status.config(text="同步並上傳中...", fg="#3b82f6")
-                # 先嘗試 pull，避免遠端有更新
-                subprocess.run(["git", "pull", "origin", "main", "--rebase"], shell=True)
+                self.status.config(text="正在強制同步並部署...", fg="#3b82f6")
                 
+                # 1. 先從遠端拉取並 rebase，確保本地與雲端同步
+                subprocess.run(["git", "pull", "origin", "main", "--rebase"], check=True, shell=True)
+                
+                # 2. Add 變動（若有）
                 subprocess.run(["git", "add", "."], check=True, shell=True)
-                subprocess.run(["git", "commit", "-m", "Update site via Python GUI"], check=True, shell=True)
+                
+                # 3. 核心修改：使用 --allow-empty 參數
+                # 即使沒有任何檔案修改，也會強制建立一個新的 Commit 紀錄
+                commit_msg = f"Trigger Deploy via GUI: {time.strftime('%Y-%m-%d %H:%M:%S')}"
+                subprocess.run(["git", "commit", "--allow-empty", "-m", commit_msg], check=True, shell=True)
+                
+                # 4. 推送到 GitHub
                 subprocess.run(["git", "push", "origin", "main"], check=True, shell=True)
                 
-                self.status.config(text="上傳成功！", fg="#22c55e")
-                messagebox.showinfo("成功", "已同步並推送到 GitHub。")
+                self.status.config(text="強制部署指令已發出！", fg="#22c55e")
+                messagebox.showinfo("成功", "已發送空白 Commit，GitHub Actions 正在重新編譯網頁。")
             except Exception as e:
-                messagebox.showerror("錯誤", f"操作失敗:\n{e}")
+                self.status.config(text="部署失敗", fg="#ef4444")
+                messagebox.showerror("錯誤", f"Git 操作失敗:\n{e}")
 
         threading.Thread(target=run).start()
 
