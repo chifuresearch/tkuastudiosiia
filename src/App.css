@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+/* 1. 基礎重置：確保 Canvas 能填滿整個視窗 */
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: dark;
+  background-color: #000; /* 畫布的最底色 */
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden; /* 防止水平捲動 */
+  background-color: black;
+}
+
+#root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+/* 確保 Canvas 永遠固定且不影響佈局 */
+#renderCanvas {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  width: 100vw !important;
+  height: 100vh !important;
+  pointer-events: none; /* 診斷完成後記得改回這個，才能捲動後方內容 */
+}
+
+/* 2. 核心修正：移除原本的 max-width 與 padding */
+/* #root {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  text-align: left; 
+} */
+
+/* 3. 確保所有容器透明，讓 -z-20 的背景顯露 */
+main {
+  background-color: transparent !important;
+}
+
+/* 4. 頂尖設計師的濾鏡面板庫：修正透明度與邊界 */
+.filter-glass {
+  /* 必須使用帶有透明度的背景色 (x/40)，backdrop-blur 才會生效 */
+  @apply bg-black/40 backdrop-blur-2xl border-y border-white/5 shadow-[0_0_50px_rgba(0,0,0,0.3)];
+}
+
+.filter-dark {
+  @apply bg-black/90 backdrop-blur-xl border-y border-white/10;
+}
+
+.filter-none {
+  @apply bg-transparent backdrop-blur-none;
+}
+
+/* 5. Babylon.js 畫布強制拉伸與指標事件控制 */
+/* #renderCanvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw !important;
+  height: 100vh !important;
+  display: block;
+  outline: none;
+  z-index: -20; 
+  pointer-events: none; 
+} */
+
+/* 6. 建築排版標籤 */
+.section-title__highlight { 
+  @apply text-blue-500 font-black italic; 
+  text-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+}
+
+/* 7. 修復 Swiper 與網格的 RWD 間距 */
+.container {
+  @apply max-w-[1600px] mx-auto px-6 md:px-12;
+}
