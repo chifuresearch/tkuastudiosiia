@@ -124,7 +124,7 @@ function App() {
           </Element>
         </SectionWrapper>
 
-        <Footer />
+        <Footer footer={siteData?.info || null}/>
       </main>
     </div>
   );

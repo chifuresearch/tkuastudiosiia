@@ -11,23 +11,31 @@ interface FooterData {
   menu: string[]; 
 }
 
-export default function Footer() {
+interface FooterDataProps {
+  footer: FooterData | null; // 接收從 App.tsx 傳來的資料
+}
+
+export default function Footer({ footer }: FooterDataProps) {
   const { i18n } = useTranslation();
-  const [info, setInfo] = useState<any>(null);
+  // const [info, setInfo] = useState<any>(null);
   const isZh = i18n.language === 'zh';
 
-  useEffect(() => {
-    fetch('/data.json')
-      .then(res => res.json())
-      .then(payload => {
-        setInfo(payload.data.info);
-      });
-  }, []);
+  // useEffect(() => {
+  //   fetch('/data.json')
+  //     .then(res => res.json())
+  //     .then(payload => {
+  //       setInfo(payload.data.info);
+  //     });
+  // }, []);
 
-  if (!info) return null;
+  if (!footer) return null;
+// 如果資料還沒載入，顯示一個簡單的 Loading 或回傳 null
+  if (!footer ) {
+    return <div className="text-white text-center py-20 font-mono animate-pulse">LOADING_DATA...</div>;
+  }
 
-  const message = isZh ? info.footerMessage_tw : info.footerMessage;
-  const links = isZh ? info.footerlog_tw : info.footerlog;
+  const message = isZh ? footer.footerMessage_tw : footer.footerMessage;
+  const links = isZh ? footer.footerlog_tw : footer.footerlog;
   
   // 建立連結與目標 ID 的映射 (對應你的 Navbar 標籤)
   // 假設：More Information -> about, Studio Works -> project, Gallery -> gallery
