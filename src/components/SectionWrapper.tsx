@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 interface SectionWrapperProps {
   children: ReactNode;
   id: string;
-  filterType?: 'glass' | 'dark' | 'transparent';
+  filterType?: 'glass' | 'dark' | 'gradient' | 'neon' | 'transparent';
   isFilterActive: boolean; // 接收 App 傳來的布林值
   paddingY?: string;       // 修正：新增 paddingY 定義
 }
@@ -21,6 +21,8 @@ export default function SectionWrapper({
   const filterStyles = {
     glass: 'bg-black/40 backdrop-blur-2xl border-y border-white/5',
     dark: 'bg-black/90 backdrop-blur-md border-y border-white/10',
+    gradient: 'bg-gradient-to-r from-white/20 to-black/20 backdrop-blur-xl',
+    neon: 'bg-purple-500/10 backdrop-blur-md border border-purple-500/30',
     transparent: 'bg-transparent'
   };
 
@@ -33,9 +35,9 @@ export default function SectionWrapper({
           opacity: isFilterActive ? 1 : 0 
         }}
         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        className={`absolute inset-0 z-0 ${filterStyles[filterType]} pointer-events-none`}
+        className={`absolute inset-0 z-10 ${filterStyles[filterType]} pointer-events-none`}
       />
-      <div className="relative z-10">
+      <div className="relative z-[10]">
         {children}
       </div>
     </section>

@@ -1,30 +1,164 @@
-/* @tailwind base;
-@tailwind components;
-@tailwind utilities; */
 @import "tailwindcss";
 
-html {
-  scroll-behavior: smooth; /* 原生平滑捲動支援 */
+/* 定義本地字型家族：LocalBlack */
+/* 100 - Thin */
+@font-face {
+  font-family: 'LocalBlack';
+  src: url('/fonts/NotoSansTC-Thin.ttf') format('truetype');
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 200 - ExtraLight */
+@font-face {
+  font-family: 'LocalBlack';
+  src: url('/fonts/NotoSansTC-ExtraLight.ttf') format('truetype');
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 300 - Light */
+@font-face {
+  font-family: 'LocalBlack';
+  src: url('/fonts/NotoSansTC-Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 400 - Regular (預設) */
+@font-face {
+  font-family: 'LocalBlack';
+  src: url('/fonts/NotoSansTC-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 500 - Medium */
+@font-face {
+  font-family: 'LocalBlack';
+  src: url('/fonts/NotoSansTC-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 600 - SemiBold */
+@font-face {
+  font-family: 'LocalBlack';
+  src: url('/fonts/NotoSansTC-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 700 - Bold */
+@font-face {
+  font-family: 'LocalBlack';
+  src: url('/fonts/NotoSansTC-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 1. 基礎配色與字體 */
+:root {
+  /* 英文使用 Consolas，中文強制使用黑體堆疊 */
+  --font-main: 'Consolas', 'Monaco', 'Cascadia Code', monospace;
+  --font-sans-zh: 'LocalBlack', "PingFang TC", "Microsoft JhengHei", "微軟正黑體", sans-serif;
+  --accent-orange: #ff5f00;
+  --bg-space-start: #010107;
+  --bg-space-end: #1a0136;
+}
+
+html, body {
+  margin: 0; padding: 0;
+  background-color: #000;
+  color: var(--accent-orange);
+  font-family: 'LocalBlack', var(--font-sans-zh);
+  text-transform: uppercase;
+  overflow-x: hidden;
 }
 
 body {
   margin: 0;
   padding: 0;
-  background-color: #000;
-  /* 移除 overflow: hidden; 或是改為以下 */
-  overflow-x: hidden; 
-  overflow-y: auto;
+  /* 英文用 Mono，中文用剛匯入的 LocalBlack */
+  font-family: 'LocalBlack', var(--font-sans-zh);
+  -webkit-font-smoothing: antialiased;
 }
 
-#root {
-  width: 100%;
+/* 2. 核心層級體系 (嚴格遵守老師指示) */
+
+/* 底層：3D 背景 (設為 -1) */
+#renderCanvas {
+  position: fixed !important;
+  top: 0; left: 0;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 0; 
+  outline: none;
 }
 
-.event-btn {
-  box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
-  transition: all 0.3s ease;
+/* 第一層 (Z: 5)：一般文字內容 */
+#root, main, section, .content-base {
+  position: relative;
+  z-index: 5;
+  font-family: 'LocalBlack', var(--font-sans-zh) !important;
 }
-.event-btn:hover {
-  box-shadow: 0 0 25px rgba(59, 130, 246, 0.8);
-  transform: translateY(-2px);
+
+/* 第二層 (Z: 10)：全域雜訊遮罩 */
+.noise-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: 
+    linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+    linear-gradient(90deg, rgba(255, 95, 0, 0.05), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.05));
+  background-size: 100% 3px, 3px 100%;
+  z-index: 10; 
+  pointer-events: none; /* 穿透點擊 */
+
+}
+
+/* 第三層 (Z: 20)：Hover 提起的潔淨區 */
+/* 必須設定實色背景，才能完全蓋掉層級 10 的雜訊 */
+.lift-active, .hover-lift:hover {
+  isolation: isolate !important;
+  position: relative !important;
+  z-index: 50 !important; 
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  box-shadow: 0 0 30px rgba(0,0,0,0.5);
+  /* 確保這裡也強制使用黑體，並將粗度開到最大 */
+  font-family: 'LocalBlack', var(--font-sans-zh) !important;
+  font-weight: 900 !important;
+}
+
+/* 3. 視覺樣式優化 */
+
+/* 確保 AboutSection 標題高亮穩定 */
+.section-title__highlight {
+  display: inline-block;
+  background-color: var(--accent-orange);
+  color: #000;
+  padding: 2px 8px;
+  font-weight: 900;
+}
+
+/* 捲軸美化 */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: #000; }
+::-webkit-scrollbar-thumb { background: var(--accent-orange); }
+
+/* 圖片 Bloom 效果 */
+.bloom-image {
+  filter: brightness(0.8) contrast(1.2);
+  transition: all 0.5s ease;
+}
+.bloom-image:hover {
+  filter: brightness(1.2) contrast(1.1);
 }

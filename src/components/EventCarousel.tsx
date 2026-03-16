@@ -1,11 +1,8 @@
-import { useEffect, useState } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay, EffectCoverflow, Pagination } from 'swiper/modules';
+import { Autoplay, Pagination } from 'swiper/modules';
 import { useTranslation } from 'react-i18next';
 
-// 引入 Swiper 樣式
 import 'swiper/css';
-import 'swiper/css/effect-coverflow';
 import 'swiper/css/pagination';
 
 interface EventData {
@@ -14,73 +11,82 @@ interface EventData {
   img_path: string;
 }
 
-interface EventCarouselProps {
-  events: EventData[]; // 接收從 App.tsx 傳來的資料
-}
-
-export default function EventCarousel({ events }: EventCarouselProps) {
+export default function EventCarousel({ events }: { events: EventData[] }) {
   const { i18n } = useTranslation();
+  const isZh = i18n.language === 'zh';
+
   if (!events || events.length === 0) return null;
 
-// 如果資料還沒載入，顯示一個簡單的 Loading 或回傳 null
-  if (!events || events.length === 0) {
-    return <div className="text-white text-center py-20 font-mono animate-pulse">LOADING_DATA...</div>;
-  }
-
   return (
-    <div className="w-full py-10 select-none">
+    <div className="w-full py-12 select-none relative z-10 font-sans-zh">
       <Swiper
-        effect={'coverflow'}
         grabCursor={true}
         centeredSlides={true}
-        // 2. 修正為奇數 (3)，確保中間最亮且不偏心
-        slidesPerView={1.5} 
-        loop={events.length > 3}
-        // 3. 穩定化參數：關閉自動預載，減少請求衝突
-        autoplay={{ delay: 5000, disableOnInteraction: false }}
-        coverflowEffect={{
-          rotate: 0,
-          stretch: 0,
-          depth: 100,
-          modifier: 1,
-          slideShadows: false,
+        slidesPerView={1.5}
+        spaceBetween={0}
+        loop={events.length > 5}
+        autoplay={{ delay: 4000, disableOnInteraction: false }}
+        pagination={{ 
+          clickable: true,
+          renderBullet: (index, className) => {
+            return `<span class="${className} !bg-orange-600 !w-6 !h-0.5 !rounded-none"></span>`;
+          }
         }}
-        pagination={{ clickable: true }}
-        modules={[EffectCoverflow, Pagination, Autoplay]}
-        className="event-swiper"
+        modules={[Pagination, Autoplay]}
+        className="event-swiper !pb-16"
         breakpoints={{
-          320: { slidesPerView: 1.2, spaceBetween: 20 },
-          1024: { slidesPerView: 4, spaceBetween: 0 } 
+          1024: { slidesPerView: 5 }
         }}
       >
         {events.map((event, index) => (
-          <SwiperSlide key={index} className="max-w-[450px]"> 
+          <SwiperSlide key={index}> 
             {({ isActive }) => (
-              <div className={`relative transition-all duration-700 rounded-2xl overflow-hidden border ${
+              <div className={`relative transition-all duration-500 border aspect-[750/1334] overflow-hidden ${
                 isActive 
-                  ? 'border-blue-500 shadow-[0_0_40px_rgba(59,130,246,0.3)] scale-100' 
-                  : 'border-white/5 opacity-80 scale-90'
+                  ? 'border-[#00d4ff] z-20 shadow-[0_0_25px_rgba(0,212,255,0.4)]' 
+                  : 'border-white/5 z-10'
               }`}>
                 
-                <div className="relative w-full aspect-[814/1439] bg-black/20">
-                  <img 
-                    src={event.img_path} 
-                    alt={event.name} 
-                    // 4. 效能優化：延遲載入與非同步解碼
-                    loading="lazy"
-                    decoding="async"
-                    className={`w-full h-full object-contain transition-all duration-1000 ${
-                      isActive ? 'grayscale-0' : 'grayscale-[40%] blur-[0.5px]'
-                    }`} 
-                  />
-                </div>
-                
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent flex flex-col justify-end p-6">
-                  <h3 className="text-xl md:text-3xl font-black text-white tracking-tighter uppercase italic leading-none">
-                    {i18n.language === 'zh' ? event.name_tw : event.name}
+                {/* 1. 圖片層：Active 完全清楚，非 Active 保持 0.7 透明度 */}
+                <img 
+                  src={event.img_path} 
+                  alt={event.name} 
+                  className={`w-full h-full object-cover transition-all duration-700 ${
+                    isActive ? 'opacity-100 grayscale-0 scale-105' : 'opacity-70 grayscale-[20%]'
+                  }`} 
+                />
+
+                {/* 2. 文字資訊區 */}
+                <div className="absolute inset-x-0 bottom-0 p-6 flex flex-col items-start gap-1">
+                  
+                  {/* 編號：Active 時有藍底黑字，非 Active 僅白字 */}
+                  <span className={`font-mono text-[9px] px-2 py-0.5 tracking-widest transition-all duration-300 ${
+                    isActive 
+                      ? 'bg-[#00d4ff] text-black font-black' 
+                      : 'bg-transparent text-white/60 font-bold'
+                  }`}>
+                    ID_0{index + 1}
+                  </span>
+
+                  {/* 標題：Active 時有藍底黑字，非 Active 僅白字並帶陰影 */}
+                  <h3 className={`text-xl md:text-2xl font-black px-2 py-1 tracking-tighter uppercase leading-tight transition-all duration-300 ${
+                    isActive 
+                      ? 'bg-[#00d4ff] text-black translate-x-0' 
+                      : 'bg-transparent text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] -translate-x-1'
+                  }`}>
+                    {isZh ? event.name_tw : event.name}
                   </h3>
-                  <div className={`h-1 bg-blue-500 mt-3 transition-all duration-1000 ${isActive ? 'w-full' : 'w-0'}`} />
+
+                  {/* 橘色飾線：只有 Active 時完整展開 */}
+                  <div className={`h-[3px] bg-orange-600 shadow-[0_0_8px_rgba(234,88,12,0.8)] transition-all duration-700 ${
+                    isActive ? 'w-full max-w-[120px] opacity-100' : 'w-0 opacity-0'
+                  }`} />
                 </div>
+
+                {/* 裝飾性掃描線：僅非 Active Slide 覆蓋 */}
+                {!isActive && (
+                  <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.1)_50%)] bg-[length:100%_4px] opacity-20" />
+                )}
               </div>
             )}
           </SwiperSlide>
@@ -88,22 +94,9 @@ export default function EventCarousel({ events }: EventCarouselProps) {
       </Swiper>
 
       <style>{`
-        /* 控制整體反差平滑度 */
-        .event-swiper .swiper-slide {
-            transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-            transform: scale(0.95);
-        }
-
-        .event-swiper .swiper-slide-active {
-            z-index: 10;
-            transform: scale(1);
-        }
-
-        /* 調整兩側對稱性 */
-        .event-swiper .swiper-slide-next,
-        .event-swiper .swiper-slide-prev {
-            opacity: 0.9;
-            transform: scale(0.97);
+        .event-swiper .swiper-pagination-bullet-active {
+            width: 2.5rem !important;
+            transition: width 0.3s ease;
         }
       `}</style>
     </div>

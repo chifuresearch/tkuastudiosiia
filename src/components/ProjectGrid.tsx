@@ -1,167 +1,158 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-// src/components/ProjectGrid.tsx
-import { X, ExternalLink, Hash, User, Calendar, Briefcase } from 'lucide-react'; // 加上 Briefcase
+import { X, FileText, UserCircle } from 'lucide-react';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay, Navigation, Pagination } from 'swiper/modules';
 
-interface ProjectData {
-  date_year: number;
-  name: string;
-  name_tw: string;
-  advisor: string;
-  advisor_tw: string;
-  title: string;
-  title_tw: string;
-  descript: string;
-  descript_tw: string;
-  tags: string[];
-  img_path: string;
-}
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
 
-interface ProjectDataProps {
-  projects: ProjectData[]; // 接收從 App.tsx 傳來的資料
-}
-
-export default function ProjectGrid({ projects }: ProjectDataProps) {
+export default function ProjectGrid({ projects }: { projects: any[] }) {
   const { i18n } = useTranslation();
-  // const [projects, setProjects] = useState<Project[]>([]);
-  const [filter, setFilter] = useState<string>('all');
-  const [selectedProject, setSelectedProject] = useState<ProjectData | null>(null);
+  const [filter, setFilter] = useState('ALL');
+  const [selectedProject, setSelectedProject] = useState<any | null>(null);
   const isZh = i18n.language === 'zh';
 
-
-
-  // useEffect(() => {
-  //   fetch('/data.json')
-  //     .then(res => res.json())
-  //     .then(payload => setProjects(payload.data.approaches))
-  //     .catch(err => console.error("Project 資料載入失敗:", err));
-  // }, []);
-
-  // 動態提取所有不重複的標籤
+  // 分類邏輯
   const allTags = useMemo(() => {
     const tags = new Set<string>();
-    projects.forEach(p => p.tags.forEach(t => tags.add(t)));
-    return ['all', ...Array.from(tags)];
+    projects.forEach(p => p.tags?.forEach((t: string) => tags.add(t)));
+    return ['ALL', ...Array.from(tags)];
   }, [projects]);
 
-  // 根據選擇的標籤進行過濾
   const filteredProjects = useMemo(() => {
-    if (filter === 'all') return projects;
-    return projects.filter(p => p.tags.includes(filter));
-  }, [projects, filter]);
-
-  if (!projects || projects.length === 0) return null;
-
-// 如果資料還沒載入，顯示一個簡單的 Loading 或回傳 null
-  if (!projects || projects.length === 0) {
-    return <div className="text-white text-center py-20 font-mono animate-pulse">LOADING_DATA...</div>;
-  }
+    if (filter === 'ALL') return projects;
+    return projects.filter(p => p.tags?.includes(filter));
+  }, [filter, projects]);
 
   return (
-    <section className="w-full py-20 px-8">
-      {/* 1. 篩選標籤欄 (Tag Filter) */}
-      <div className="flex flex-wrap justify-center gap-3 mb-16 max-w-4xl mx-auto">
+    <div className="space-y-12">
+      {/* 1. 篩選器間距縮減 */}
+      <div className="flex flex-wrap gap-3 px-6 justify-center">
         {allTags.map(tag => (
           <button
             key={tag}
             onClick={() => setFilter(tag)}
-            className={`px-4 py-1 text-[10px] font-bold tracking-widest uppercase transition-all border rounded-full ${
+            className={`px-5 py-1.5 font-mono text-sm border-2 transition-all duration-300 ${
               filter === tag 
-                ? 'bg-blue-600 border-blue-600 text-white shadow-[0_0_15px_rgba(59,130,246,0.5)]' 
-                : 'border-white/10 text-gray-500 hover:border-white/30 hover:text-white'
+              ? 'bg-[#00d4ff] border-[#00d4ff] text-black font-black shadow-[4px_4px_0px_rgba(0,212,255,0.4)]' 
+              : 'bg-black/40 border-white/20 text-gray-400 hover:border-[#00d4ff] hover:text-[#00d4ff]'
             }`}
           >
-            {tag === 'all' ? (isZh ? '全部作品' : 'ALL_PROJECTS') : tag}
+            {tag.toUpperCase()}
           </button>
         ))}
       </div>
 
-      {/* 2. 6-Column Project Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 lg:gap-8 max-w-[1600px] mx-auto">
+      {/* 2. 專案格位：修正文字比例 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 border-l border-t border-white/10 relative z-10 font-sans-zh">
         {filteredProjects.map((project, idx) => (
           <div 
-            key={`${project.name}-${idx}`}
+            key={`${project.name}-${idx}`} 
             onClick={() => setSelectedProject(project)}
-            className="group relative cursor-pointer animate-in fade-in slide-in-from-bottom-4 duration-500"
-            style={{ animationDelay: `${(idx % 12) * 50}ms` }}
+            className="group relative flex flex-col border-r border-b border-white/10 overflow-hidden transition-all duration-500 hover:z-30 cursor-pointer aspect-[750/1334] bg-black"
           >
-            {/* 作品圖片容器 */}
-            <div className="aspect-square overflow-hidden bg-white/5 border border-white/5 group-hover:border-blue-500/50 transition-all duration-500">
-              <img 
-                src={project.img_path} 
-                alt={project.title}
-                loading="lazy"
-                decoding="async"
-                className="w-full h-full object-cover opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700"
-              />
-              
-              {/* 懸停遮罩 */}
-              <div className="absolute inset-0 bg-blue-900/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center">
-                <ExternalLink className="text-white w-6 h-6" />
-              </div>
+            <div className="absolute inset-0 z-0">
+              <img src={project.img_path} className="w-full h-full object-cover grayscale opacity-30 transition-all duration-700 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-110" alt="" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90" />
             </div>
 
-            {/* 作品簡訊 */}
-            <div className="mt-4 px-1">
-              <p className="text-[9px] text-blue-400 font-mono tracking-tighter mb-1 uppercase">
-                {project.date_year} / {isZh ? project.advisor_tw : project.advisor}
-              </p>
-              <h4 className="text-white font-bold text-[11px] leading-tight tracking-tight truncate group-hover:text-blue-400 transition-colors">
-                {isZh ? project.title_tw : project.title}
-              </h4>
-              <p className="text-gray-500 text-[9px] mt-1 font-light italic">
-                by {isZh ? project.name_tw : project.name}
-              </p>
+            {/* 文字區：min-h 縮減為 160px，p 縮減為 5 */}
+            <div className="relative z-10 mt-auto p-5 flex flex-col justify-end gap-2 transition-all duration-300 bg-black/60 group-hover:bg-[#00d4ff] min-h-[160px] border-t border-white/10">
+              
+              <div className="flex flex-col leading-tight">
+                {/* 指導老師 (緊湊排版) */}
+                <span className="text-orange-500 font-mono text-[11px] tracking-widest block group-hover:text-black font-black mb-0.5">
+                  ADVISOR: {isZh ? project.advisor_tw : project.advisor}
+                </span>
+                
+                {/* 作者名 (字級維持但減少行高) */}
+                <h3 className="text-white text-3xl font-black tracking-tighter uppercase transition-all duration-300 group-hover:text-black group-hover:text-5xl font-sans-zh leading-[0.9]">
+                  {isZh ? project.name_tw : project.name}
+                </h3>
+                
+                {/* 作品名 (緊貼作者名) */}
+                <p className="text-gray-300 text-xs font-bold group-hover:text-black mt-2 transition-all line-clamp-1">
+                  {isZh ? project.title_tw : project.title}
+                </p>
+              </div>
+
+              {/* 進度線與類別：下移並減少間距 */}
+              <div className="flex flex-col gap-1.5 mt-2">
+                <div className="h-[2px] w-full bg-white/10 group-hover:bg-black/10 relative overflow-hidden">
+                  <div className="absolute top-0 left-0 h-full w-0 bg-orange-600 group-hover:w-full transition-all duration-700 delay-150 shadow-[0_0_8px_rgba(234,88,12,0.6)]" />
+                </div>
+                <p className="text-gray-500 text-[9px] group-hover:text-orange-600 group-hover:text-[12px] font-mono font-black italic self-end transition-all delay-500 group-hover:bg-black group-hover:px-1.5 py-0.5">
+                  {isZh ? project.category_tw : project.category}
+                </p>
+              </div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* 3. Project Detail Modal */}
+      {/* 3. 穩定版 Modal */}
       {selectedProject && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/90 backdrop-blur-3xl" onClick={() => setSelectedProject(null)} />
-          
-          <div className="relative w-full max-w-5xl bg-[#0a0a0a] border border-white/10 rounded-3xl overflow-hidden flex flex-col md:flex-row shadow-2xl animate-in zoom-in-95 duration-300">
-            <button 
-              onClick={() => setSelectedProject(null)}
-              className="absolute top-6 right-6 z-10 p-2 bg-white/5 hover:bg-white/10 rounded-full text-white"
-            >
-              <X size={24} />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 bg-black/95 backdrop-blur-md">
+          <div className="relative flex flex-col md:flex-row bg-[#111] border border-white/10 w-full max-w-6xl h-[90vh] md:h-[80vh] overflow-hidden shadow-2xl">
+            
+            <button onClick={() => setSelectedProject(null)} className="absolute top-4 right-4 z-[110] text-white hover:text-[#00d4ff] bg-black/50 p-2 rounded-full transition-all">
+              <X size={32} />
             </button>
 
-            {/* Modal 左側：大圖 */}
-            <div className="w-full md:w-1/2 bg-black border-r border-white/5">
-              <img src={selectedProject.img_path} className="w-full h-full object-contain p-8" alt="" />
+            {/* 左側：固定畫框輪播 */}
+            <div className="flex-grow bg-black relative border-r border-white/10 flex items-center justify-center min-h-[300px]">
+              <Swiper modules={[Autoplay, Navigation, Pagination]} autoplay={{ delay: 3500 }} loop={true} navigation={true} pagination={{ clickable: true }} className="h-full w-full">
+                <SwiperSlide>
+                  <div className="w-full h-full flex items-center justify-center p-6">
+                    <img src={selectedProject.img_path} className="max-w-full max-h-full object-contain" alt="" />
+                  </div>
+                </SwiperSlide>
+                {selectedProject.img_paths?.map((img: string, i: number) => (
+                  <SwiperSlide key={i}>
+                    <div className="w-full h-full flex items-center justify-center p-6">
+                      <img src={img} className="max-w-full max-h-full object-contain" alt="" />
+                    </div>
+                  </SwiperSlide>
+                ))}
+              </Swiper>
             </div>
 
-            {/* Modal 右側：內容 */}
-            <div className="w-full md:w-1/2 p-10 md:p-14 overflow-y-auto max-h-[60vh] md:max-h-[90vh]">
-              <div className="mb-10">
-                <div className="flex flex-wrap gap-2 mb-6">
-                  {selectedProject.tags.map(tag => (
-                    <span key={tag} className="px-3 py-1 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[9px] font-bold tracking-widest uppercase rounded-full">
-                      #{tag}
-                    </span>
+            {/* 右側：資訊區 */}
+            <div className="w-full md:w-[450px] shrink-0 h-full p-8 md:p-12 bg-[#111] flex flex-col">
+              <div className="mb-8 border-b border-[#00d4ff]/30 pb-6 shrink-0">
+                <div className="flex items-center gap-2 mb-4">
+                  <UserCircle size={16} className="text-orange-500" />
+                  <span className="text-gray-400 font-mono text-s uppercase tracking-widest">
+                    Advisor: {isZh ? selectedProject.advisor_tw : selectedProject.advisor}
+                  </span>
+                </div>
+                <h2 className="text-5xl font-black text-white mb-2 tracking-tighter uppercase leading-none font-sans-zh">
+                  {isZh ? selectedProject.name_tw : selectedProject.name}
+                </h2>
+                <h4 className="text-[#00d4ff] text-xl font-bold tracking-tight mb-4">
+                  {isZh ? selectedProject.title_tw : selectedProject.title}
+                </h4>
+                <div className="flex flex-wrap gap-2 mt-4">
+                  {selectedProject.tags?.map((t: string) => (
+                    <span key={t} className="px-2 py-0.5 border border-white/10 text-[9px] text-gray-500 font-mono uppercase">#{t}</span>
                   ))}
                 </div>
-                <h3 className="text-3xl md:text-5xl font-black text-white mb-4 tracking-tighter italic uppercase leading-none">
-                  {isZh ? selectedProject.title_tw : selectedProject.title}
-                </h3>
-                <div className="flex items-center gap-6 text-xs text-gray-500 font-mono tracking-widest mt-6 uppercase border-y border-white/5 py-4">
-                  <div className="flex items-center gap-2"><User size={14}/> {isZh ? selectedProject.name_tw : selectedProject.name}</div>
-                  <div className="flex items-center gap-2"><Briefcase size={14}/> {isZh ? selectedProject.advisor_tw : selectedProject.advisor}</div>
-                  <div className="flex items-center gap-2"><Calendar size={14}/> {selectedProject.date_year}</div>
+              </div>
+              
+              <div className="flex-grow overflow-y-auto pr-4 scrollbar-thin scrollbar-thumb-[#00d4ff] scrollbar-track-transparent">
+                <div className="flex gap-4">
+                  <div className="mt-1 text-[#00d4ff] shrink-0"><FileText size={20} /></div>
+                  <div className="text-gray-400 text-base leading-relaxed whitespace-pre-wrap font-light text-justify font-sans-zh">
+                    {isZh ? selectedProject.descript_tw : selectedProject.descript}
+                  </div>
                 </div>
               </div>
-
-              <p className="text-gray-400 text-sm md:text-base leading-relaxed text-justify font-light whitespace-pre-wrap">
-                {isZh ? selectedProject.descript_tw : selectedProject.descript}
-              </p>
             </div>
           </div>
         </div>
       )}
-    </section>
+    </div>
   );
 }

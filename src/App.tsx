@@ -75,29 +75,32 @@ function App() {
   return (
     <div 
       onMouseMove={handleMouseMove}
-      className="relative bg-black text-white antialiased selection:bg-blue-500 min-h-screen"
-    >
+      className="relative bg-black text-white antialiased selection:bg-orange-500 min-h-screen isolation-auto">
       <BabylonjsScene />
-      <Navbar onLanguageToggle={toggleLanguage} currentLang={i18n.language} onNavigate={handleNavigate}/>
+      <div className="noise-overlay" />
 
-      <main className="relative z-10">
+      <main className="relative z-[50] content-container">
+        <Navbar onLanguageToggle={toggleLanguage} 
+              currentLang={i18n.language} 
+              onNavigate={handleNavigate}
+              siteData={siteData} // 必須傳入，Navbar 才能讀取 menu 資料
+              />
+
         {/* 修正點：isFilterActive 直接傳入布林值，並確認 SectionWrapper 接收 paddingY */}
         <SectionWrapper id="events-section" filterType="transparent" isFilterActive={isFilterActive} paddingY="py-20">
-          <Element name="about">
-            <div className="container mx-auto px-6">
+          <Element name="event" className="container mx-auto px-6">
               <h2 className="text-3xl font-black mb-8 tracking-widest text-blue-500 uppercase">Upcoming Events</h2>
               <EventCarousel events={siteData?.events || []}/>
-            </div>
           </Element>
         </SectionWrapper>
 
-        <SectionWrapper id="about-text" filterType="glass" isFilterActive={isFilterActive} paddingY="py-32">
-          <div className="container mx-auto px-6">
+        <SectionWrapper id="about-text" filterType="gradient" isFilterActive={isFilterActive} paddingY="py-32">
+          <Element name="about" className="container mx-auto px-6 z-[50]">
             <AboutSection abouts={siteData?.info.sections[1] || null}/>
-          </div>
+          </Element>
         </SectionWrapper>
 
-        <SectionWrapper id="project-section" filterType="dark" isFilterActive={isFilterActive} paddingY="py-20">
+        <SectionWrapper id="project-section" filterType="transparent" isFilterActive={isFilterActive} paddingY="py-20">
           <Element name="project">
             <div className="container mx-auto px-6">
               <h2 className="text-3xl font-black mb-12 tracking-widest uppercase italic">Selected Projects</h2>
@@ -106,7 +109,7 @@ function App() {
           </Element>
         </SectionWrapper>
 
-        <SectionWrapper id="studio-section" filterType="glass" isFilterActive={isFilterActive} paddingY="py-20">
+        <SectionWrapper id="studio-section" filterType="neon" isFilterActive={isFilterActive} paddingY="py-20">
           <Element name="studio">
             <div className="container mx-auto px-6">
               <h2 className="text-3xl font-black mb-12 tracking-widest text-right uppercase">The Studio Team</h2>
@@ -116,11 +119,9 @@ function App() {
         </SectionWrapper>
 
         <SectionWrapper id="gallery-section" filterType="transparent" isFilterActive={isFilterActive} paddingY="py-20">
-          <Element name="gallery">
-            <div className="container mx-auto px-6">
+          <Element name="gallery" className="container mx-auto px-6" >
               <h2 className="text-3xl font-black mb-12 tracking-widest uppercase">Collected Moments</h2>
               <GalleryCarousel gallery={siteData?.gallery || []}/>
-            </div>
           </Element>
         </SectionWrapper>
 

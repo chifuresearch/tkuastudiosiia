@@ -1,123 +1,104 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, User, Briefcase, FileText } from 'lucide-react'; // 推薦安裝 lucide-react
+import { X, FileText } from 'lucide-react';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay, Navigation, Pagination } from 'swiper/modules';
+
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
 
 interface AdvisorData {
-  type: number;
   name: string;
   name_tw: string;
   studio_title: string;
   studio_title_tw: string;
-  img_path: string;
+  img_path: string;       
+  img_paths?: string[];    
   descript: string;
   descript_tw: string;
 }
 
 interface TeamGridProps {
-  advisors: AdvisorData[]; // 接收從 App.tsx 傳來的資料
+  advisors: AdvisorData[];
 }
+
+// ... 前面 import 與 AdvisorData 定義保持不變 ...
+
+// ... 前面 import 與 AdvisorData 定義保持不變 ...
 
 export default function TeamGrid({ advisors }: TeamGridProps) {
   const { i18n } = useTranslation();
   const [selectedMember, setSelectedMember] = useState<AdvisorData | null>(null);
   const isZh = i18n.language === 'zh';
-  
-  if (!advisors || advisors.length === 0) return null;
 
-// 如果資料還沒載入，顯示一個簡單的 Loading 或回傳 null
-  if (!advisors || advisors.length === 0) {
-    return <div className="text-white text-center py-20 font-mono animate-pulse">LOADING_DATA...</div>;
-  }
-  
+  if (!advisors) return null;
+
   return (
-    <div className="w-full py-12 px-8 lg:px-16">
-        {/* 1. 增加網格間距：從 gap-px 改為 gap-8 或 gap-12 */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 lg:gap-6">
-        {advisors.map((member, idx) => (
-            <div 
-            key={idx}
-            onClick={() => setSelectedMember(member)}
-            className="group relative cursor-pointer"
-            >
-            {/* 2. 增加裝飾性外框與內距，創造模型展示感 */}
-            <div className="relative aspect-[3/4] bg-white/2 border border-white/10 p-0.5 group-hover:border-blue-500/50 transition-all duration-500">
-                
-                {/* 3. 圖片容器限制，確保圖片不直接貼邊 */}
-                <div className="w-full h-full overflow-hidden bg-black">
-                <img 
-                    src={member.img_path} 
-                    alt={member.name}
-                    className="w-full h-full object-cover grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-105 transition-all duration-1000"
-                    loading="lazy"
-                    decoding="async"
-                />
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-0 border-l border-t border-white/10 relative z-10 font-sans-zh">
+      {/* 1. 外層格位列表 (保持原本的暴力美學與進度條邏輯) */}
+      {advisors.map((member, idx) => (
+        <div key={idx} onClick={() => setSelectedMember(member)} className="group relative flex flex-col border-r border-b border-white/10 overflow-hidden transition-all duration-300 hover:z-30 cursor-pointer h-full bg-black">
+          {/* ... 格位內部代碼保持不變 ... */}
+          <div className="relative flex-grow overflow-hidden min-h-[350px]">
+            <img src={member.img_path} className="w-full h-full object-cover grayscale opacity-30 transition-all duration-700 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-110" alt="" />
+          </div>
+          <div className="p-5 flex flex-col gap-3 transition-all duration-300 bg-black/60 group-hover:bg-[#00d4ff] min-h-[150px] border-t border-white/10">
+             {/* 這裡保留您滿意的名字與橘色進度條代碼 */}
+             <div className="flex justify-between items-end">
+               <h3 className={`text-white transition-all duration-300 group-hover:text-black font-black ${isZh ? 'text-3xl group-hover:text-5xl' : 'text-xl group-hover:text-3xl font-mono'}`}>{isZh ? member.name_tw : member.name}</h3>
+             </div>
+             <div className="flex flex-col gap-2 mt-2">
+                <div className="h-[2px] w-full bg-white/10 group-hover:bg-black/10 relative overflow-hidden">
+                   <div className="absolute top-0 left-0 h-full w-0 bg-orange-600 group-hover:w-full transition-all duration-700 delay-150" />
                 </div>
-
-                {/* 4. 懸停時的細線裝飾 */}
-                <div className="absolute inset-[-4px] border border-blue-500/0 group-hover:border-blue-500/20 transition-all duration-700 pointer-events-none" />
-            </div>
-
-            {/* 5. 文字改到圖片下方，增加排版層次感 */}
-            <div className="mt-4 space-y-1">
-                <p className="text-[10px] text-blue-500 font-mono tracking-[0.2em] uppercase truncate">
-                {isZh ? member.studio_title_tw : member.studio_title}
-                </p>
-                <h4 className="text-white font-bold text-xs tracking-widest uppercase">
-                {isZh ? member.name_tw : member.name}
-                </h4>
-            </div>
-            </div>
-        ))}
+                <p className="text-gray-600 text-[10px] group-hover:text-orange-600 group-hover:text-[13px] font-mono font-black italic self-end transition-all delay-500 group-hover:bg-black group-hover:px-2 py-0.5">{isZh ? member.studio_title_tw : member.studio_title}</p>
+             </div>
+          </div>
         </div>
+      ))}
 
-      {/* 詳細資訊彈窗 (Modal) */}
+      {/* --- MODAL 彈出視窗：等比例縮放修正 --- */}
       {selectedMember && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 md:p-8">
-          {/* 背景模糊遮罩 */}
-          <div 
-            className="absolute inset-0 bg-black/80 backdrop-blur-2xl"
-            onClick={() => setSelectedMember(null)}
-          />
-          
-          <div className="relative w-full max-w-4xl bg-[#111] border border-white/10 rounded-2xl overflow-hidden flex flex-col md:flex-row shadow-2xl animate-in fade-in zoom-in duration-300">
-            {/* 關閉按鈕 */}
-            <button 
-              onClick={() => setSelectedMember(null)}
-              className="absolute top-6 right-6 z-10 p-2 bg-white/5 hover:bg-white/10 rounded-full text-white transition-colors"
-            >
-              <X size={20} />
-            </button>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 bg-black/95 backdrop-blur-md">
+          {/* 容器改為 max-content 確保不會強迫拉寬 */}
+          <div className="relative flex flex-col md:flex-row bg-[#111] border border-white/10 max-w-[75vw] max-h-[90vh] overflow-hidden shadow-2xl">
+            
+            <button onClick={() => setSelectedMember(null)} className="absolute top-4 right-4 z-[110] text-white hover:text-[#00d4ff] bg-black/50 p-2 rounded-full"><X size={32} /></button>
 
-            {/* 左側：大圖 */}
-            <div className="w-full md:w-2/5 aspect-[3/4] bg-black">
-              <img src={selectedMember.img_path} className="w-full h-full object-cover" alt="" />
+            {/* 左側輪播區：關鍵修正 */}
+            {/* 1. 使用 flex-1 並配合 min-w-0 讓它根據圖片寬度彈性調整 
+                2. h-[400px] md:h-auto 確保高度固定於 Modal 內 */}
+            <div className="flex-1 bg-black relative border-r border-white/10 min-w-0">
+              <Swiper modules={[Autoplay, Navigation, Pagination]} autoplay={{ delay: 3500 }} loop={true} navigation={true} pagination={{ clickable: true }} className="h-full w-full">
+                <SwiperSlide>
+                  <div className="w-full h-full flex items-center justify-center">
+                    {/* object-contain 確保不裁切，h-full 確保高度填滿 */}
+                    <img src={selectedMember.img_path} className="h-full w-auto object-contain mx-auto" alt="Main" />
+                  </div>
+                </SwiperSlide>
+
+                {selectedMember.img_paths && selectedMember.img_paths.map((fullPath, i) => (
+                  <SwiperSlide key={i}>
+                    <div className="w-full h-full flex items-center justify-center">
+                      <img src={fullPath} className="h-full w-auto object-contain mx-auto" alt="Work" />
+                    </div>
+                  </SwiperSlide>
+                ))}
+              </Swiper>
             </div>
 
-            {/* 右側：詳細文字 */}
-            <div className="w-full md:w-3/5 p-8 md:p-12 overflow-y-auto max-h-[70vh] md:max-h-full">
-              <div className="mb-8">
-                <span className="text-blue-500 font-mono text-xs tracking-[0.3em]">/ STUDIO_ADVISOR</span>
-                <h3 className="text-4xl font-black text-white mt-2 mb-1 tracking-tighter uppercase">
-                  {isZh ? selectedMember.name_tw : selectedMember.name}
-                </h3>
-                <p className="text-gray-400 font-bold tracking-widest uppercase text-sm">
-                  {isZh ? selectedMember.studio_title_tw : selectedMember.studio_title}
-                </p>
+            {/* 右側文字區：寬度固定 (w-[450px])，確保位置不動 */}
+            <div className="w-full md:w-[450px] p-8 md:p-12 overflow-y-auto bg-[#111] shrink-0">
+              <div className="mb-8 border-b border-[#00d4ff]/30 pb-6">
+                <h2 className="text-5xl font-black text-white mb-1 tracking-tighter uppercase">{isZh ? selectedMember.name_tw : selectedMember.name}</h2>
+                <p className="text-orange-600 font-bold tracking-widest uppercase text-sm italic">{isZh ? selectedMember.studio_title_tw : selectedMember.studio_title}</p>
               </div>
-
-              <div className="space-y-6">
-                <div className="flex gap-4">
-                  <div className="mt-1 text-blue-500"><FileText size={18} /></div>
-                  <div className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap font-light text-justify">
-                    {isZh ? selectedMember.descript_tw : selectedMember.descript}
-                  </div>
+              <div className="flex gap-4">
+                <div className="mt-1 text-[#00d4ff]"><FileText size={20} /></div>
+                <div className="text-gray-300 text-base leading-relaxed whitespace-pre-wrap font-light text-justify font-sans-zh">
+                  {isZh ? selectedMember.descript_tw : selectedMember.descript}
                 </div>
-              </div>
-
-              <div className="mt-12 pt-8 border-t border-white/5 flex gap-4">
-                 <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 text-[10px] font-bold tracking-widest transition-all">
-                   VIEW PORTFOLIO
-                 </button>
               </div>
             </div>
           </div>

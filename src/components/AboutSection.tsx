@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronRight, Info, Target, Cpu } from 'lucide-react';
 
@@ -22,146 +22,112 @@ interface AboutData {
 }
 
 interface AboutDataProps {
-  abouts: AboutData | null; // 接收從 App.tsx 傳來的資料
+  abouts: AboutData | null;
 }
+
+// ... 前面介面定義不變 ...
 
 export default function AboutSection({ abouts }: AboutDataProps) {
   const { i18n } = useTranslation();
-  // const [data, setData] = useState<AboutData | null>(null);
   const [activeTab, setActiveTab] = useState(0);
   const isZh = i18n.language === 'zh';
 
-  // useEffect(() => {
-  //   fetch('/data.json')
-  //     .then(res => res.json())
-  //     .then(payload => setData(payload.data.info.sections[1])) // 串接 sections[1]
-  //     .catch(err => console.error("About 數據加載失敗:", err));
-  // }, []);
+  if (!abouts) return null;
 
-  if (!abouts ) return null;
-
-// 如果資料還沒載入，顯示一個簡單的 Loading 或回傳 null
-  if (!abouts ) {
-    return <div className="text-white text-center py-20 font-mono animate-pulse">LOADING_DATA...</div>;
-  }
-  
-
-  // 定義內容索引
   const tabs = [
-    { 
-      label: isZh ? abouts.content_a_tw[0] : abouts.content_a[0], 
-      text: isZh ? abouts.content_a_tw[1] : abouts.content_a[1],
-      icon: <Info size={16} />
-    },
-    { 
-      label: isZh ? abouts.content_b_tw[0] : abouts.content_b[0], 
-      text: isZh ? abouts.content_b_tw[1] : abouts.content_b[1],
-      icon: <Target size={16} />
-    },
-    { 
-      label: isZh ? abouts.content_c_tw[0] : abouts.content_c[0], 
-      text: isZh ? abouts.content_c_tw[1] : abouts.content_c[1],
-      icon: <Cpu size={16} />
-    }
+    { label: isZh ? abouts.content_a_tw[0] : abouts.content_a[0], text: isZh ? abouts.content_a_tw[1] : abouts.content_a[1], icon: <Info size={16} /> },
+    { label: isZh ? abouts.content_b_tw[0] : abouts.content_b[0], text: isZh ? abouts.content_b_tw[1] : abouts.content_b[1], icon: <Target size={16} /> },
+    { label: isZh ? abouts.content_c_tw[0] : abouts.content_c[0], text: isZh ? abouts.content_c_tw[1] : abouts.content_c[1], icon: <Cpu size={16} /> }
   ];
 
   return (
-    <section id="about" className="relative z-10 py-32 px-8 overflow-hidden bg-black/20 backdrop-blur-3xl border-y border-white/5">
+    <div className="relative z-[5] py-24 px-4 md:px-0">
       <div className="max-w-7xl mx-auto">
         
-        {/* 第一部分：EA4 Studio Program */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 mb-40 items-center">
-          <div className="lg:col-span-6 space-y-8">
-            <div className="space-y-2">
-              <h4 className="text-blue-500 font-mono text-[10px] tracking-[0.4em] uppercase opacity-70">
-                / {isZh ? abouts.subtitle_tw : abouts.subtitle}
-              </h4>
-              <h2 
-                className="text-4xl md:text-6xl font-black text-white tracking-tighter uppercase leading-[0.9]"
-                dangerouslySetInnerHTML={{ __html: isZh ? abouts.title_tw : abouts.title }}
-              />
+        {/* 第一部分：圖文雙欄 (保持您喜歡的架構) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mb-40 items-start">
+          <div className="lg:col-span-6 space-y-6">
+            <div className="space-y-1">
+              <h4 className="text-orange-300 font-mono text-[12px] tracking-[0.4em] uppercase opacity-80">/ {isZh ? abouts.subtitle_tw : abouts.subtitle}</h4>
+              <h2 className="text-5xl md:text-5xl font-black text-white tracking-tighter uppercase leading-[0.9] section-title__highlight"
+                dangerouslySetInnerHTML={{ __html: isZh ? abouts.title_tw : abouts.title }} />
             </div>
 
-            {/* 高質感內容切換器 */}
-            <div className="space-y-4 pt-8">
+            <div className="space-y-2 pt-6">
               {tabs.map((tab, idx) => (
-                <div 
-                  key={idx}
-                  onMouseEnter={() => setActiveTab(idx)}
-                  className={`group p-6 rounded-xl border transition-all duration-500 cursor-help ${
+                <div key={idx} onMouseEnter={() => setActiveTab(idx)}
+                  /* 修正：Hover 變藍底黑字，提升層級 Z:20 */
+                  className={`group transition-all duration-200 border relative ${
                     activeTab === idx 
-                      ? 'bg-blue-600/10 border-blue-500/50' 
-                      : 'bg-white/5 border-white/10 opacity-50'
+                    ? 'lift-active translate-x-4 scale-[1.02] z-[20]' 
+                    : 'bg-black/60 border-white/10 opacity-60'
                   }`}
-                >
-                  <div className="flex items-center gap-4 mb-3">
-                    <span className="text-blue-400">{tab.icon}</span>
-                    <h3 className="text-white font-bold text-xs tracking-widest uppercase">
-                      {tab.label.replace(/<[^>]*>?/gm, '')} {/* 移除 JSON 中的 img 標籤 */}
+                  style={{ borderRadius: '0px' }}>
+                  
+                  <div className={`flex items-center gap-4 p-4 ${activeTab === idx ? 'text-black' : 'text-gray-400'}`}>
+                    <span className={activeTab === idx ? 'text-black' : 'text-blue-400'}>{tab.icon}</span>
+                    <h3 className={`tracking-widest uppercase font-mono font-black transition-all ${activeTab === idx ? 'text-3xl' : 'text-[11px]'}`}>
+                      {tab.label.replace(/<[^>]*>?/gm, '')}
                     </h3>
                   </div>
+                  
                   {activeTab === idx && (
-                    <p 
-                      className="text-gray-400 text-sm leading-relaxed text-justify animate-in fade-in slide-in-from-left-4 duration-500"
-                      dangerouslySetInnerHTML={{ __html: tab.text }}
-                    />
+                    <div className="px-4 pb-6 animate-in fade-in zoom-in-95 duration-300">
+                      <p className="text-black text-xl md:text-2xl font-black leading-tight text-justify font-mono border-t-2 border-black pt-4"
+                        dangerouslySetInnerHTML={{ __html: tab.text }} />
+                    </div>
                   )}
                 </div>
               ))}
             </div>
           </div>
 
-          {/* 右側視覺展示：疊加圖片 */}
-          <div className="lg:col-span-6 relative">
-            <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border border-white/10 group">
-              <img src="assets/img/about/ab_00_l.png" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000" alt="" />
-              <div className="absolute inset-0 bg-gradient-to-tr from-blue-900/40 to-transparent" />
+          <div className="lg:col-span-6 relative pt-12">
+            <div className="relative aspect-[4/3] border border-white/20 overflow-hidden" style={{ borderRadius: '0px' }}>
+              <img src="assets/img/about/ab_00_l.png" className="w-full h-full object-cover grayscale opacity-50" alt="" />
             </div>
-            <div className="absolute -bottom-10 -left-10 w-2/3 aspect-video rounded-xl overflow-hidden border border-white/20 shadow-2xl z-20 hidden md:block">
+            <div className="absolute -bottom-6 -left-6 w-1/2 aspect-video border-2 border-orange-500 bg-black z-[30]">
               <img src="assets/img/about/ab_00_s.png" className="w-full h-full object-cover" alt="" />
             </div>
           </div>
         </div>
 
-        {/* 第二部分：Informational Hub */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
-          {/* 左側視覺 */}
-          <div className="lg:col-span-5 order-2 lg:order-1">
-             <div className="relative group">
-                <img src="assets/img/about/ab_01_l.png" className="rounded-2xl border border-white/5 grayscale group-hover:grayscale-0 transition-all duration-700" alt="" />
-                <img src="assets/img/about/ab_01_s.png" className="absolute -top-6 -right-6 w-1/2 border border-blue-500/30 rounded-lg shadow-xl" alt="" />
-             </div>
+        {/* 第二部分：Informational Hub (上文下圖格線化) */}
+        <div className="border-t border-white/20 pt-20">
+          <div className="mb-10 text-right">
+            <h3 className="text-orange-300 font-mono text-[12px] tracking-[0.4em] uppercase opacity-80">/ {isZh ? abouts.subtitle_2_tw : abouts.subtitle_2}</h3>
+            <h2 className="text-5xl md:text-5xl font-black text-white tracking-tighter uppercase leading-[1.0]"
+              dangerouslySetInnerHTML={{ __html: isZh ? abouts.title_2_tw : abouts.title_2 }} />
           </div>
 
-          {/* 右側清單 */}
-          <div className="lg:col-span-7 order-1 lg:order-2 space-y-10">
-            <div className="space-y-4">
-              <h3 className="text-blue-500 font-mono text-[10px] tracking-[0.4em] uppercase">
-                / {isZh ? abouts.subtitle_2_tw : abouts.subtitle_2}
-              </h3>
-              <h2 
-                className="text-3xl md:text-5xl font-black text-white tracking-tighter uppercase leading-[1.1]"
-                dangerouslySetInnerHTML={{ __html: isZh ? abouts.title_2_tw : abouts.title_2 }}
-              />
-            </div>
-
-            <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {(isZh ? abouts.content_2_tw : abouts.content_2).map((item, idx) => (
-                <li key={idx} className="flex gap-4 p-4 bg-white/5 border border-white/5 rounded-lg hover:border-blue-500/30 transition-all group">
-                  <ChevronRight size={14} className="text-blue-500 mt-1 shrink-0 group-hover:translate-x-1 transition-transform" />
-                  <p className="text-gray-400 text-xs leading-relaxed group-hover:text-gray-200 transition-colors">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-0 border-l border-t border-white/10">
+            {(isZh ? abouts.content_2_tw : abouts.content_2).map((item, idx) => (
+              <div key={idx} 
+                className="group border-r border-b border-white/10 transition-all relative flex flex-col overflow-hidden">
+                
+                {/* 上欄：文字區塊 (Hover 變藍底黑字放大) */}
+                <div className="p-8 h-[250px] flex flex-col justify-between transition-all duration-300 group-hover:bg-[#00d4ff] group-hover:z-[20] group-hover:relative">
+                  <span className="text-orange-500 font-mono text-xs group-hover:text-black font-bold">DATA_ENTRY_0{idx+1}</span>
+                  <p className="text-gray-400 text-sm font-bold font-mono group-hover:text-black group-hover:text-2xl transition-all leading-tight">
                     {item}
                   </p>
-                </li>
-              ))}
-            </ul>
+                  <ChevronRight size={16} className="text-orange-500 group-hover:text-black opacity-0 group-hover:opacity-100 transition-all" />
+                </div>
+
+                {/* 下欄：圖形區塊 (固定高度，保持雜訊感) */}
+                <div className="h-[150px] border-t border-white/10 bg-black overflow-hidden">
+                   <img 
+                     src={`assets/img/about/ab_01_${idx === 0 ? 'l' : 's'}.png`} 
+                     className="w-full h-full object-cover grayscale opacity-30 group-hover:opacity-100 transition-all duration-700" 
+                     alt="" 
+                   />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-      </div>
 
-      {/* 建築座標背景背景線 */}
-      <div className="absolute top-1/2 left-0 w-full h-px bg-white/5 -z-10" />
-      <div className="absolute top-0 left-1/4 w-px h-full bg-white/5 -z-10" />
-    </section>
+      </div>
+    </div>
   );
 }

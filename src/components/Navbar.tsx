@@ -1,50 +1,94 @@
-import { Link } from 'react-scroll';
-import { Globe } from 'lucide-react';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Globe, ChevronDown, ExternalLink } from 'lucide-react';
 
-// 1. 定義 Props 的型別
 interface NavbarProps {
   onLanguageToggle: () => void;
   currentLang: string;
-  onNavigate: (sectionId: string, camIndex: string) => void; // 確保有這行
+  onNavigate: (sectionId: string, camIndex: string) => void;
+  siteData: any; 
 }
 
-const NAV_CONFIG = [
-  { id: "about", label: "About", camIndex: "0" },
-  { id: "project", label: "Project", camIndex: "1" },
-  { id: "studio", label: "Studio", camIndex: "2" },
-  { id: "gallery", label: "Gallery", camIndex: "3" },
-  { id: "perspective", label: "Perspective", camIndex: "4" }
-];
+export default function Navbar({ onLanguageToggle, currentLang, onNavigate, siteData }: NavbarProps) {
+  const { i18n } = useTranslation();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const isZh = i18n.language === 'zh';
 
-// 2. 核心修正：在參數解構中加入 onNavigate
-export default function Navbar({ onLanguageToggle, currentLang, onNavigate }: NavbarProps) {
+  const info = siteData?.info || siteData?.data?.info;
+  const menuItems = isZh ? info?.menu_tw : info?.menu;
+
+  // 定義前四個按鈕的 Section 跳轉 ID
+  const sectionIds = ["about", "project", "studio", "gallery"];
+
+  // ShareLinks 下拉選單資料
+  const shareLinks = [
+    { label: "P5js Lab", url: "#" },
+    { label: "Grasshopper", url: "#" },
+    { label: "Python Scripts", url: "#" },
+    { label: "Github Repo", url: "#" }
+  ];
+
   return (
-    <nav className="fixed top-0 w-full z-50 flex justify-between items-center px-8 py-6 pointer-events-none">
-      <div className="text-xl font-black tracking-tighter text-white pointer-events-auto">
-        TKU_ARCH <span className="text-blue-500 text-xs ml-1 italic">LAB</span>
+    <nav className="fixed top-0 w-full z-[100] flex justify-between items-center px-8 py-6 pointer-events-none">
+      {/* 左側 Logo */}
+      <div className="text-2xl font-black tracking-tighter text-white pointer-events-auto cursor-pointer group font-sans-zh">
+        TKU_ARCH <span className="text-[#00d4ff] text-xs ml-1 italic group-hover:not-italic transition-all">LAB</span>
       </div>
 
-      <div className="hidden md:flex bg-black/60 backdrop-blur-xl border border-white/10 px-6 py-2 rounded-full gap-8 pointer-events-auto">
-        {NAV_CONFIG.map(item => (
+      {/* 中間主選單：整合 SHARELINKS 作為最後一項 */}
+      <div className="hidden md:flex bg-black/80 backdrop-blur-md border-2 border-white/20 px-2 py-1 gap-1 pointer-events-auto items-center">
+        {/* 1. 前四個固定按鈕 (About, Project, Studio, Gallery) */}
+        {menuItems?.slice(0, 4).map((item: any, idx: number) => (
           <button
-            key={item.id}
-            onClick={() => onNavigate(item.id, item.camIndex)} // 呼叫 App.tsx 傳進來的邏輯
-            className="text-[10px] uppercase tracking-widest text-gray-400 hover:text-white cursor-pointer transition-colors font-mono"
+            key={idx}
+            onClick={() => onNavigate(sectionIds[idx], idx.toString())}
+            className="px-4 py-2 text-[11px] font-black uppercase tracking-[0.2em] transition-all cursor-crosshair font-sans-zh text-gray-400 hover:bg-[#00d4ff] hover:text-black"
           >
-            {item.label}
+            {typeof item === 'object' ? (item.name || item.label) : item}
           </button>
         ))}
+
+        {/* 2. 第五個按鈕：SHARELINKS 帶下拉選單 */}
+        <div 
+          className="relative"
+          onMouseEnter={() => setIsDropdownOpen(true)}
+          onMouseLeave={() => setIsDropdownOpen(false)}
+        >
+          <button
+            className={`flex items-center gap-2 px-4 py-2 text-[11px] font-black uppercase tracking-[0.2em] transition-all cursor-crosshair font-sans-zh ${
+              isDropdownOpen ? 'bg-[#00d4ff] text-black' : 'text-gray-400 hover:bg-[#00d4ff] hover:text-black'
+            }`}
+          >
+            {isZh ? "設計方法" : "SHARELINKS"} 
+            <ChevronDown size={10} className={`transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+          </button>
+
+          {/* 下拉 Drop Box (從按鈕正下方彈出) */}
+          {isDropdownOpen && (
+            <div className="absolute top-full left-0 mt-1 w-52 bg-black border-2 border-[#00d4ff] p-1 shadow-[8px_8px_0px_rgba(0,212,255,0.3)] animate-in fade-in slide-in-from-top-2">
+              {shareLinks.map((link, i) => (
+                <a
+                  key={i}
+                  href={link.url}
+                  className="flex items-center justify-between p-3 text-[11px] font-black text-white hover:bg-[#00d4ff] hover:text-black transition-colors border-b border-white/10 last:border-0 font-sans-zh"
+                >
+                  {link.label} <ExternalLink size={10} />
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
-      <button 
-        onClick={onLanguageToggle}
-        className="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/10 px-4 py-1.5 rounded-full transition-all pointer-events-auto"
-      >
-        <Globe size={14} className="text-blue-400" />
-        <span className="text-[10px] font-bold text-white uppercase">
-          {currentLang === 'zh' ? 'EN' : '中文'}
-        </span>
-      </button>
+      {/* 右側：僅保留語系切換 */}
+      <div className="flex items-center gap-4 pointer-events-auto font-sans-zh">
+        <button 
+          onClick={onLanguageToggle}
+          className="p-2 border border-white/20 bg-black text-white hover:bg-[#00d4ff] hover:text-black transition-all"
+        >
+          <Globe size={18} />
+        </button>
+      </div>
     </nav>
   );
 }
