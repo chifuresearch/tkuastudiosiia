@@ -18,96 +18,57 @@ const pointCloudVertexShader = `
         return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
     }
 
-    vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
-    vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
-    vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); }
-    float snoise(vec2 v) {
-        const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
-        vec2 i  = floor(v + dot(v, C.yy) );
-        vec2 x0 = v -   i + dot(i, C.xx);
-        vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
-        vec4 x12 = x0.xyxy + C.xxzz;
-        x12.xy -= i1;
-        i = mod289(i);
-        vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 ));
-        vec3 m = max(0.3 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
-        m = m*m; m = m*m;
-        vec3 x = 2.0 * fract(p * C.www) - 1.0;
-        vec3 h = abs(x) - 0.2;
-        vec3 ox = floor(x + 0.2);
-        vec3 a0 = x - ox;
-        m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
-        vec3 g;
-        g.x  = a0.x  * x0.x  + h.x  * x0.y;
-        g.yz = a0.yz * x12.xz + h.yz * x12.yw;
-        return 110.0 * dot(m, g);
-    }
-
-void main(void) {
-        // 1. 基礎投影與景深修正
+    void main(void) {
         vec4 viewPos = view * vec4(position, 1.0);
         float distToCamera = -viewPos.z;
-        float farFade = 1.0 - smoothstep(10.0, 35.0, distToCamera);
 
+        // --- 1. Matrix 網格化 (Grid Logic) ---
+        float gridSize = 0.05; // 數值越小，解析度越高
+        vec3 snappedPos = floor(position / gridSize) * gridSize;
+
+        // --- 2. 垂直流動數據線 (Data Rain) ---
+        // 根據 XZ 座標產生每條「代碼線」的隨機速度與偏移
+        float columnId = random(snappedPos.xz);
+        float speed = 0.15 + columnId * 0.5;
+        float flow = mod(snappedPos.y * 0.2 - time * speed, 0.3);
+        
+        // 只有在特定的「流動區塊」才發光
+        float brightness = pow(1.0 - flow, 8.0); 
+        
+        // --- 3. 互動擾動 (High-Res Glitch) ---
         vec4 screenPos = worldViewProjection * vec4(position, 1.0);
         vec2 normalizedScreenPos = (screenPos.xy / screenPos.w) * 0.5 + 0.5;
+        float interaction = 1.0 - smoothstep(0.0, 0.1, distance(normalizedScreenPos, mousePos));
         
-        // 2. 強化撕裂演算法：混合多重頻率雜訊
-        float f1 = snoise(normalizedScreenPos * 3.5 + time * 0.3);      
-        float f2 = snoise(normalizedScreenPos * 12.0 - time * 0.6) * 0.5; 
-        float f3 = snoise(normalizedScreenPos * 25.0 + time * 1.3) * 0.2; 
-        
-        float fractalDist = distance(normalizedScreenPos, mousePos);
-        float tearing = (f1 + f2 + f3) * 0.25; 
-        float ruggedField = fractalDist + tearing;
-        
-        // 作用範圍縮小且破碎化
-        float interaction = 1.0 - smoothstep(0.0, 0.12, ruggedField);
-
-        // 3. 噴湧動態與高度循環
-        float flowNoise = snoise(position.xz * 0.12 + time * 0.2);
-        float speed = 0.25 + random(position.xy) * 0.5;
-        float lifeSpan = 2.8 + f1 * 1.2; 
-        float offset = mod(time * speed + position.y, lifeSpan);
-        float progress = offset / lifeSpan;
-        
-        vec3 displacement = vec3(flowNoise * 0.2, offset, flowNoise * 0.25) * interaction;
-        vec3 finalPos = position + displacement;
+        // 互動時產生的水平數據抖動
+        float glitch = step(0.98, random(vec2(time * 10.0, snappedPos.y))) * interaction;
+        vec3 finalPos = snappedPos + vec3(glitch * 0.5, 0.0, 0.0);
 
         gl_Position = worldViewProjection * vec4(finalPos, 1.0);
 
-        // 4. 點的大小隨交互縮放
+        // --- 4. 點的大小與顏色 ---
         float baseSize = perspectiveFactor / gl_Position.w;
-        gl_PointSize = baseSize * (1.0 + interaction * 4.5);
-        gl_PointSize = clamp(gl_PointSize, 0.4, 6.5);
+        gl_PointSize = baseSize * (0.5 + brightness * 2.0 + interaction * 3.0);
+        gl_PointSize = clamp(gl_PointSize, 0.3, 3.0);
 
-        // --- 5. 顏色修正：找回消失的 Cyan 並與 Pink/Orange 融合 ---
-        vec3 cCyan = vec3(0.0, 0.85, 1.0);     // 電光藍
-        vec3 cPink = vec3(1.0, 0.25, 0.6);    // 霓虹粉
-        vec3 cPurple = vec3(0.3, 0.05, 0.8);  // 深邃紫
-        vec3 cOrange = vec3(1.0, 0.45, 0.05); // 核心橘
-        vec3 cGold = vec3(1.0, 0.8, 0.3);     // 邊緣過渡金
-        
-        // 重新分配底板權重：強制藍、粉、紫三者交替
-        // 利用 sin 與雜訊交叉控制，確保顏色不會只剩一種
-        float colorSwitch = sin(position.x * 0.2 + time * 0.5) * 0.5 + 0.5;
-        vec3 baseMix = mix(cCyan, cPink, colorSwitch);
-        // 加入深紫色的陰影流動
-        float purpleFlow = snoise(position.xy * 0.05 - time * 0.15);
-        vec3 baseWithShadow = mix(baseMix, cPurple, clamp(purpleFlow, 0.0, 1.0) * 0.4);
-        
-        // 核心融合邏輯：讓橘色滲透進底色中
-        // 加入金色邊界過渡，解決直接變橘色的突兀感
-        float bleed = clamp(interaction + f2 * 0.4, 0.0, 1.0);
-        vec3 colorWithTransition = mix(baseWithShadow, cGold, bleed * 0.5);
-        vColor = mix(colorWithTransition, cOrange, interaction);
-        
-        // 增加交互時的高頻閃爍 (Voltage Spark)
-        vColor += cCyan * f3 * interaction * 0.3;
-        
-        // 6. 透明度：確保噴湧過程中有明顯的消逝感
-        float lifeAlpha = 1.0 - smoothstep(0.4, 0.85, progress); 
-        vAlpha = mix(0.18, 0.9, interaction) * lifeAlpha * farFade;
+        // Matrix 經典配色：深綠、螢光綠、近乎白色的核心
+        vec3 matrixDark = vec3(0.0, 0.2, 0.0);
+        vec3 matrixBright = vec3(0.0, 1.0, 0.3);
+        vec3 matrixCore = vec3(1.0, 0.6, 0.0);
+
+        // vec3 cTeal = vec3(0.0, 0.9, 0.95);    // 圖片中的亮青色
+        // vec3 cCrimson = vec3(0.7, 0.0, 0.15); // 圖片中的深紅
+        // vec3 cWhite = vec3(1.0, 1.0, 1.0);    // 亮部白點
+
+        // vec3 matrixDark = vec3(0.0, 0.2, 0.0);
+        // vec3 matrixBright = vec3(0.0, 1.0, 0.3);
+        // vec3 matrixCore = vec3(0.8, 1.0, 0.8);
+
+        vColor = mix(matrixDark, matrixBright, brightness);
+        vColor = mix(vColor, matrixCore, pow(brightness, 2.0) + interaction);
+
+        // 越遠越暗，且只有在數據流動時才明顯可見
+        vAlpha = (0.1 + brightness * 0.9) * (1.0 - smoothstep(15.0, 40.0, distToCamera));
     }
 `;
 
@@ -116,11 +77,19 @@ const pointCloudFragmentShader = `
     varying float vAlpha;
     varying vec3 vColor;
     void main(void) {
-        float r = distance(gl_PointCoord, vec2(0.5));
-        if (r > 0.5) discard;
-        float mask = smoothstep(0.5, 0.1, r); 
-        float glow = pow(1.0 - (r * 2.0), 2.5);
-        gl_FragColor = vec4(vColor * (glow + 0.8) * 3.0, vAlpha * mask);
+        // 建立正方形邊界
+        vec2 uv = gl_PointCoord - vec2(0.5);
+        float maxDist = max(abs(uv.x), abs(uv.y));
+        
+        if (maxDist > 0.5) discard;
+
+        // 加入掃描線效果 (Scanline)
+        float scanline = step(0.2, mod(gl_PointCoord.y * 10.0, 1.0));
+        
+        // 強化邊緣感
+        float edge = smoothstep(0.5, 0.48, maxDist);
+        
+        gl_FragColor = vec4(vColor * (scanline * 0.5 + 0.5), vAlpha * edge);
     }
 `;
 
@@ -151,8 +120,8 @@ const canvasRef = useRef<HTMLCanvasElement>(null);
 
         const pipeline = new BABYLON.DefaultRenderingPipeline("default", true, scene, [camera]);
         pipeline.bloomEnabled = true;
-        pipeline.bloomThreshold = 0.1;
-        pipeline.bloomWeight = 0.7;
+        pipeline.bloomThreshold = 0.2;
+        pipeline.bloomWeight = 0.5;
         pipeline.bloomKernel = 64;
 
         const globalMousePos = new BABYLON.Vector2(0.5, 0.5);
