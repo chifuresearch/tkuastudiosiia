@@ -23,7 +23,7 @@ export default function EventCarousel({ events }: { events: EventData[] }) {
         grabCursor={true}
         centeredSlides={true}
         slidesPerView={1.5}
-        spaceBetween={0}
+        spaceBetween={15}
         loop={events.length > 5}
         autoplay={{ delay: 4000, disableOnInteraction: false }}
         pagination={{ 

@@ -29,8 +29,8 @@ const pointCloudVertexShader = `
         // --- 2. 垂直流動數據線 (Data Rain) ---
         // 根據 XZ 座標產生每條「代碼線」的隨機速度與偏移
         float columnId = random(snappedPos.xz);
-        float speed = 0.5 + columnId * 1.5;
-        float flow = mod(snappedPos.y * 0.2 - time * speed, 1.0);
+        float speed = 0.15 + columnId * 0.5;
+        float flow = mod(snappedPos.y * 0.2 - time * speed, 0.3);
         
         // 只有在特定的「流動區塊」才發光
         float brightness = pow(1.0 - flow, 8.0); 
@@ -52,9 +52,17 @@ const pointCloudVertexShader = `
         gl_PointSize = clamp(gl_PointSize, 0.3, 3.0);
 
         // Matrix 經典配色：深綠、螢光綠、近乎白色的核心
-        vec3 matrixDark = vec3(0.0, 0.2, 0.0);
-        vec3 matrixBright = vec3(0.0, 1.0, 0.3);
-        vec3 matrixCore = vec3(0.8, 1.0, 0.8);
+        vec3 matrixDark = vec3(0.3, 0.1, 0.0);
+        vec3 matrixBright = vec3(1.0, 0.5, 0);
+        vec3 matrixCore = vec3(1.0, 0.9, 0.8);
+
+        // vec3 cTeal = vec3(0.0, 0.9, 0.95);    // 圖片中的亮青色
+        // vec3 cCrimson = vec3(0.7, 0.0, 0.15); // 圖片中的深紅
+        // vec3 cWhite = vec3(1.0, 1.0, 1.0);    // 亮部白點
+
+        // vec3 matrixDark = vec3(0.0, 0.2, 0.0);
+        // vec3 matrixBright = vec3(0.0, 1.0, 0.3);
+        // vec3 matrixCore = vec3(0.8, 1.0, 0.8);
 
         vColor = mix(matrixDark, matrixBright, brightness);
         vColor = mix(vColor, matrixCore, pow(brightness, 2.0) + interaction);

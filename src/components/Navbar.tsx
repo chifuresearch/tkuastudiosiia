@@ -50,6 +50,32 @@ export default function Navbar({ onLanguageToggle, currentLang, onNavigate, site
           </button>
         ))}
         {/* ShareLinks Dropdown 保持原樣... */}
+        <div 
+          className="relative"
+          onMouseEnter={() => setIsDropdownOpen(true)}
+          onMouseLeave={() => setIsDropdownOpen(false)}
+        >
+          <button className="flex items-center gap-2 px-4 py-2 text-[11px] font-black uppercase tracking-[0.2em] text-gray-400 hover:bg-[#00d4ff] hover:text-black transition-all">
+            {isZh ? "設計方法" : "SHARELINKS"}
+            <ChevronDown size={14} className={`transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+          </button>
+
+          {/* 下拉選單內容 */}
+          {isDropdownOpen && (
+            <div className="absolute top-full right-0 mt-1 w-48 bg-black border-2 border-white/20 p-2 flex flex-col gap-1 animate-in slide-in-from-top-2 duration-200">
+              {shareLinks.map((link, i) => (
+                <a
+                  key={i}
+                  href={link.url}
+                  className="flex items-center justify-between px-3 py-2 text-[10px] font-bold text-gray-400 hover:bg-[#00d4ff] hover:text-black transition-all group/item"
+                >
+                  {link.label}
+                  <ExternalLink size={12} className="opacity-0 group-hover/item:opacity-100 transition-opacity" />
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* --- Mobile Menu Toggle (md 以下顯示) --- */}

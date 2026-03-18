@@ -19,9 +19,9 @@ export default function SectionWrapper({
 }: SectionWrapperProps) {
   
   const filterStyles = {
-    glass: 'bg-black/40 backdrop-blur-2xl border-y border-white/5',
+    glass: 'bg-black/10 backdrop-blur-md border-y border-white/10',
     dark: 'bg-black/90 backdrop-blur-md border-y border-white/10',
-    gradient: 'bg-gradient-to-r from-white/20 to-black/20 backdrop-blur-xl',
+    gradient: 'bg-gradient-to-r from-white/30 to-black/30 backdrop-blur-2xl',
     neon: 'bg-purple-500/10 backdrop-blur-md border border-purple-500/30',
     transparent: 'bg-transparent'
   };

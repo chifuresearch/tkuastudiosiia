@@ -8,7 +8,8 @@ import './i18n';
 import Navbar from './components/Navbar';
 import BabylonjsScene from './components/BabylonjsScene';
 import EventCarousel from './components/EventCarousel';
-import AboutSection from './components/AboutSection';
+// 在 App.tsx 的匯入部分
+import { AboutHero, AboutHub } from './components/AboutSection';
 import ProjectGrid from './components/ProjectGrid';
 import TeamGrid from './components/TeamGrid';
 import GalleryCarousel from './components/GalleryCarousel';
@@ -94,10 +95,16 @@ function App() {
           </Element>
         </SectionWrapper>
 
-        <SectionWrapper id="about-text" filterType="gradient" isFilterActive={isFilterActive} paddingY="py-32">
-          <Element name="about" className="container mx-auto px-6 z-[50]">
-            <AboutSection abouts={siteData?.info.sections[1] || null}/>
+        {/* 上半部 */}
+        <SectionWrapper id="about-hero" filterType="gradient" isFilterActive={isFilterActive} paddingY="py-20">
+          <Element name="about">
+            <AboutHero abouts={siteData?.info.sections[1] || null}/>
           </Element>
+        </SectionWrapper>
+
+        {/* 下半部：資訊集線平台 (使用 Glass 濾鏡，增加區隔感) */}
+        <SectionWrapper id="about-hub" filterType="neon" isFilterActive={isFilterActive} paddingY="py-20">
+          <AboutHub abouts={siteData?.info.sections[1] || null}/>
         </SectionWrapper>
 
         <SectionWrapper id="project-section" filterType="transparent" isFilterActive={isFilterActive} paddingY="py-20">
@@ -109,7 +116,7 @@ function App() {
           </Element>
         </SectionWrapper>
 
-        <SectionWrapper id="studio-section" filterType="neon" isFilterActive={isFilterActive} paddingY="py-20">
+        <SectionWrapper id="studio-section" filterType="glass" isFilterActive={isFilterActive} paddingY="py-20">
           <Element name="studio">
             <div className="container mx-auto px-6">
               <h2 className="text-3xl font-black mb-12 tracking-widest text-right uppercase">The Studio Team</h2>
@@ -125,7 +132,10 @@ function App() {
           </Element>
         </SectionWrapper>
 
-        <Footer footer={siteData?.info || null}/>
+        <Footer 
+          footer={siteData?.info || null} 
+          onNavigate={handleNavigate}
+          />
       </main>
     </div>
   );

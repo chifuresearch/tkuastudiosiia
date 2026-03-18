@@ -1,79 +1,63 @@
-import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-scroll'; // 引入捲動組件
 
 interface FooterData {
   footerlog: string[];
   footerlog_tw: string[];
   footerMessage: string[];
   footerMessage_tw: string[];
-  // 為了對應跳轉目標，我們預設一個 id 映射
   menu: string[]; 
 }
 
 interface FooterDataProps {
-  footer: FooterData | null; // 接收從 App.tsx 傳來的資料
+  footer: FooterData | null;
+  // 新增：接收與 Navbar 相同的導航函式
+  onNavigate: (sectionId: string, camIndex: string) => void;
 }
 
-export default function Footer({ footer }: FooterDataProps) {
+export default function Footer({ footer, onNavigate }: FooterDataProps) {
   const { i18n } = useTranslation();
-  // const [info, setInfo] = useState<any>(null);
   const isZh = i18n.language === 'zh';
 
-  // useEffect(() => {
-  //   fetch('/data.json')
-  //     .then(res => res.json())
-  //     .then(payload => {
-  //       setInfo(payload.data.info);
-  //     });
-  // }, []);
-
   if (!footer) return null;
-// 如果資料還沒載入，顯示一個簡單的 Loading 或回傳 null
-  if (!footer ) {
-    return <div className="text-white text-center py-20 font-mono animate-pulse">LOADING_DATA...</div>;
-  }
 
   const message = isZh ? footer.footerMessage_tw : footer.footerMessage;
   const links = isZh ? footer.footerlog_tw : footer.footerlog;
   
-  // 建立連結與目標 ID 的映射 (對應你的 Navbar 標籤)
-  // 假設：More Information -> about, Studio Works -> project, Gallery -> gallery
-  const targetIds = ["about", "studio", "project", "gallery"];
+  // 建立與 Navbar 一致的目標 ID 與攝影機索引映射
+  const sectionIds = ["about", "project", "studio", "gallery"];
 
   return (
-    <footer className="relative z-20 bg-black/90 backdrop-blur-3xl border-t border-white/5 pt-20 pb-10">
+    <footer className="relative z-20 bg-black/90 backdrop-blur-3xl border-t border-white/5 pt-20 pb-10 font-sans-zh">
       <div className="container mx-auto px-8 lg:px-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 mb-20">
           
           {/* A. 研究室簡介 */}
           <div className="lg:col-span-6">
-            <h2 className="text-blue-500 font-black tracking-tighter text-2xl mb-8 uppercase">
+            <h2 className="text-[#00d4ff] font-black tracking-tighter text-2xl mb-8 uppercase">
               TKU_ARCH <span className="text-white opacity-80">IIA_STUDIO</span>
             </h2>
-            <p className="text-gray-400 text-sm leading-[1.8] text-justify font-light max-w-2xl">
+            <p className="text-gray-400 text-sm leading-[1.8] text-justify font-light max-w-2xl uppercase">
               {message[0]}
             </p>
           </div>
 
-          {/* B. 快速導航：加入捲動效果 */}
+          {/* B. 快速導航：同步攝影機與捲動效果 */}
           <div className="lg:col-span-3 lg:ml-auto">
-            <h4 className="text-white font-bold text-[10px] tracking-[0.4em] mb-10 uppercase opacity-50">
+            <h4 className="text-white font-bold text-[10px] tracking-[0.4em] mb-10 uppercase opacity-50 text-center lg:text-left">
               {isZh ? "快速導覽" : "NAVIGATION"}
             </h4>
-            <ul className="space-y-5">
+            
+            {/* Mobile: 橫向排列 (flex-row + flex-wrap) | Desktop: 縱向排列 (flex-col) */}
+            <ul className="flex flex-row flex-wrap justify-center lg:flex-col lg:justify-start gap-4 lg:gap-5">
               {links.map((link: string, idx: number) => (
                 <li key={idx} className="group overflow-hidden">
-                  <Link
-                    to={targetIds[idx] || "about"} // 對應到 Element 的 name
-                    smooth={true}
-                    duration={800}
-                    offset={-70}
-                    className="text-gray-500 group-hover:text-blue-400 text-xs tracking-[0.2em] transition-all duration-300 uppercase flex items-center gap-2 cursor-pointer"
+                  <button
+                    onClick={() => onNavigate(sectionIds[idx], idx.toString())}
+                    className="text-gray-500 hover:text-[#00d4ff] text-[11px] lg:text-xs tracking-[0.2em] transition-all duration-300 uppercase flex items-center gap-2 cursor-pointer bg-transparent border-none p-0 font-black"
                   >
-                    <span className="w-0 group-hover:w-4 h-[1px] bg-blue-500 transition-all duration-300" />
+                    <span className="hidden lg:block w-0 group-hover:w-4 h-[1px] bg-[#00d4ff] transition-all duration-300" />
                     {link}
-                  </Link>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -84,9 +68,8 @@ export default function Footer({ footer }: FooterDataProps) {
             <h4 className="text-white font-bold text-[10px] tracking-[0.4em] mb-10 uppercase opacity-50">
               {isZh ? "聯絡資訊" : "CONTACT"}
             </h4>
-            <div className="text-gray-400 text-xs font-mono leading-loose">
+            <div className="text-gray-400 text-[10px] lg:text-xs font-mono leading-loose uppercase">
               <p className="mb-6">{message[2]}</p>
-              {/* Social Buttons... */}
             </div>
           </div>
         </div>
