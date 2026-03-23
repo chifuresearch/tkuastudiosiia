@@ -208,6 +208,11 @@
                 "name": "workshop1_114",
                 "name_tw": "114系列工作坊1",
                 "img_path": "assets/img/events/event_workshop1_114.png"
+            },
+            {
+                "name": "legacy_114",
+                "name_tw": "114傳承工作坊",
+                "img_path": "assets/img/events/event_legacy_114.png"
             }
         ],
         "supporters": [
