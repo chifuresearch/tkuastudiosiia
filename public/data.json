@@ -7,14 +7,13 @@
                 "Studio",
                 "Gallery",
                 {
-                    "name":"ShareLink",
-                    "sub":[
+                    "name": "ShareLink",
+                    "sub": [
                         "P5js",
                         "GH",
                         "Python"
                     ]
                 },
-                
                 "Contacts"
             ],
             "menu_tw": [
@@ -23,8 +22,8 @@
                 "教學團隊",
                 "集錦",
                 {
-                    "name":"設計方法",
-                    "sub":[
+                    "name": "設計方法",
+                    "sub": [
                         "P5js",
                         "GH",
                         "Python"
@@ -144,7 +143,7 @@
                     "subtitle_tw": "與本教學團隊進一步聯繫"
                 }
             ],
-            "tags":[
+            "tags": [
                 "bim",
                 "big-data",
                 "construction",
@@ -194,6 +193,21 @@
                 "name": "workshop1_113",
                 "name_tw": "113系列工作坊1",
                 "img_path": "assets/img/events/event_workshop1_113.png"
+            },
+            {
+                "name": "workshop2_114",
+                "name_tw": "114系列工作坊2",
+                "img_path": "assets/img/events/event_workshop2_114.png"
+            },
+            {
+                "name": "workshop3_114",
+                "name_tw": "114系列工作坊3",
+                "img_path": "assets/img/events/event_workshop3_114.png"
+            },
+            {
+                "name": "workshop1_114",
+                "name_tw": "114系列工作坊1",
+                "img_path": "assets/img/events/event_workshop1_114.png"
             }
         ],
         "supporters": [

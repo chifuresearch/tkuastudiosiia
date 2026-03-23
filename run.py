@@ -65,19 +65,159 @@ class SiteManagerGUI:
             sub_win.geometry("300x350")
             sub_win.configure(bg="#2d2d2d")
 
-            tk.Label(sub_win, text="Import from CSV", fg="#60a5fa", bg="#2d2d2d", font=("Arial", 10, "bold")).pack(pady=15)
+            tk.Label(sub_win, text="Import Menu", fg="#60a5fa", bg="#2d2d2d", font=("Arial", 10, "bold")).pack(pady=15)
             
             types = [
-                ("Import Events", "events"),
+                ("Import Events", "events_popup"),
                 ("Import Advisors", "advisors"),
-                ("Import Projects/Approaches", "approaches"),
+                ("Import Projects (CSV)", "approaches"),
                 ("Import Gallery", "gallery")
             ]
 
             for text, data_type in types:
-                btn = tk.Button(sub_win, text=text, width=25, bg="#444444", fg="white", 
-                                command=lambda t=data_type: self.process_csv_import(t))
+                # btn = tk.Button(sub_win, text=text, width=25, bg="#444444", fg="white", 
+                #                 command=lambda t=data_type: self.process_csv_import(t))
+                # btn.pack(pady=8)
+                if data_type == "events_popup":
+                    btn = tk.Button(sub_win, text=text, width=25, bg="#444444", fg="white", command=self.show_event_import_popup)
+                else:
+                    btn = tk.Button(sub_win, text=text, width=25, bg="#444444", fg="white", command=lambda t=data_type: self.process_csv_import(t))
                 btn.pack(pady=8)
+
+    def show_event_import_popup(self):
+        """彈出匯入單一事件的 GUI"""
+        event_win = tk.Toplevel(self.root)
+        event_win.title("Add New Event")
+        event_win.geometry("400x450")
+        event_win.configure(bg="#2d2d2d")
+
+        # 變數儲存
+        self.temp_event_img = ""
+
+        tk.Label(event_win, text="Event Import", fg="#60a5fa", bg="#2d2d2d", font=("Arial", 12, "bold")).pack(pady=10)
+
+        # 1. 選擇圖片按鈕
+        img_label = tk.Label(event_win, text="No Image Selected", fg="#888888", bg="#2d2d2d")
+        def select_img():
+            path = filedialog.askopenfilename(filetypes=[("Image files", "*.png *.jpg *.jpeg")])
+            if path:
+                self.temp_event_img = path
+                img_label.config(text=os.path.basename(path), fg="#22c55e")
+        
+        tk.Button(event_win, text="Select Event Image", command=select_img, bg="#444444", fg="white").pack(pady=5)
+        img_label.pack()
+
+        # 2. 英文名輸入 (name)
+        tk.Label(event_win, text="Event Name (English ID):", fg="white", bg="#2d2d2d").pack(pady=(15, 0))
+        entry_en = tk.Entry(event_win, width=30, bg="#1a1a1a", fg="white", insertbackground="white")
+        entry_en.pack(pady=5)
+        tk.Label(event_win, text="e.g. workshop_2026", fg="#666666", bg="#2d2d2d", font=("Arial", 8)).pack()
+
+        # 3. 中文名輸入 (name_tw)
+        tk.Label(event_win, text="事件中文名稱 (Chinese Name):", fg="white", bg="#2d2d2d").pack(pady=(15, 0))
+        entry_tw = tk.Entry(event_win, width=30, bg="#1a1a1a", fg="white", insertbackground="white")
+        entry_tw.pack(pady=5)
+
+        # 4. 執行匯入按鈕
+        def run_import():
+            name_en = entry_en.get().strip()
+            name_tw = entry_tw.get().strip()
+            
+            if not self.temp_event_img or not name_en or not name_tw:
+                messagebox.showwarning("警告", "請填寫完整資訊並選擇圖片")
+                return
+            
+            self.execute_event_save(name_en, name_tw, self.temp_event_img, event_win)
+
+        tk.Button(event_win, text="CONFIRM & IMPORT", command=run_import, bg="#3b82f6", fg="white", width=20, pady=10).pack(pady=30)
+
+    def execute_event_save(self, name_en, name_tw, src_img, window):
+        """執行影像裁切縮放與 JSON 寫入"""
+        try:
+            base_path = os.path.dirname(os.path.abspath(__file__))
+            json_path = os.path.join(base_path, 'public', 'data.json')
+            
+            # 定義目標路徑與檔名
+            target_img_name = f"event_{name_en}.png"
+            target_dir = os.path.join(base_path, 'public', 'assets', 'img', 'events')
+            os.makedirs(target_dir, exist_ok=True)
+            target_img_path = os.path.join(target_dir, target_img_name)
+            
+            # 呼叫縮放裁切邏輯 (814x1439)
+            success = self.process_event_image(src_img, target_img_path)
+            
+            if not success:
+                raise Exception("圖片縮放裁切失敗")
+
+            # 更新 JSON 資料結構
+            with open(json_path, 'r', encoding='utf-8') as f:
+                full_data = json.load(f)
+
+            new_event = {
+                "name": name_en,
+                "name_tw": name_tw,
+                "img_path": f"assets/img/events/{target_img_name}"
+            }
+
+            events = full_data['data'].get('events', [])
+            dup_idx = next((i for i, x in enumerate(events) if x['name'] == name_en), -1)
+            
+            if dup_idx >= 0:
+                events[dup_idx] = new_event
+            else:
+                events.append(new_event)
+            
+            full_data['data']['events'] = events
+
+            with open(json_path, 'w', encoding='utf-8') as f:
+                json.dump(full_data, f, indent=4, ensure_ascii=False)
+
+            messagebox.showinfo("成功", f"事件「{name_tw}」已處理並匯入！\n解析度已調整為 814x1439")
+            window.destroy()
+            
+        except Exception as e:
+            messagebox.showerror("錯誤", f"匯入失敗: {e}")
+
+    def process_event_image(self, src_path, dst_path, target_size=(814, 1439)):
+        """精準縮放裁切至 814x1439，支援 JPG/PNG 並修正轉向與色彩模式"""
+        from PIL import Image, ImageOps
+        try:
+            with Image.open(src_path) as img:
+                # 1. 處理轉向資訊：避免 JPG 讀入後圖片自動躺下
+                img = ImageOps.exif_transpose(img)
+
+                # 2. 強制轉為 RGB：JPG 或帶有透明度的 PNG 統一轉為 RGB，確保裁切運算不報錯
+                if img.mode != 'RGB':
+                    img = img.convert('RGB')
+                
+                target_w, target_h = target_size
+                img_w, img_h = img.size
+                target_ratio = target_w / target_h
+                img_ratio = img_w / img_h
+
+                # 3. 裁切與縮放邏輯 (以這張海報為例，它太高了，會縮放寬度後裁切上下)
+                if img_ratio > target_ratio:
+                    # 圖片太寬：以高度為基準縮放，裁切兩側
+                    new_h = target_h
+                    new_w = int(new_h * img_ratio)
+                    img = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
+                    left = (new_w - target_w) / 2
+                    img = img.crop((left, 0, left + target_w, target_h))
+                else:
+                    # 圖片太高：以寬度為基準縮放，裁切上下 (這張海報會走這裡)
+                    new_w = target_w
+                    new_h = int(new_w / img_ratio)
+                    img = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
+                    top = (new_h - target_h) / 2
+                    img = img.crop((0, top, target_w, top + target_h))
+                
+                # 4. 儲存為 PNG
+                img.save(dst_path, 'PNG', quality=95)
+                return True
+        except Exception as e:
+            # 在終端機印出具體錯誤，方便除錯
+            print(f"影像處理具體失敗原因: {e}")
+            return False
 
     def process_csv_import(self, data_type):
             import glob, re, csv, shutil, os, json, threading
