@@ -162,3 +162,18 @@ body {
 .bloom-image:hover {
   filter: brightness(1.2) contrast(1.1);
 }
+
+@keyframes expandVertical {
+  from {
+    max-height: 0;
+    opacity: 0;
+  }
+  to {
+    max-height: 1000px; /* 給一個足夠大的值 */
+    opacity: 1;
+  }
+}
+
+.animate-expand-vertical {
+  animation: expandVertical 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
