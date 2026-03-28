@@ -21,6 +21,8 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-i18next": "^16.5.4",
+    "react-intersection-observer": "^10.0.3",
+    "react-lazyload": "^3.2.1",
     "react-scroll": "^1.9.3",
     "swiper": "^12.1.2"
   },
